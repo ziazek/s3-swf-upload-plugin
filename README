@@ -6,7 +6,7 @@ S3SwfUpload allow user uploading a file to S3 directly, so you can save the cost
 Install
 =======
 
-./script/plugin install git://github.com/GreenAsJade/s3-swf-upload-plugin.git
+./script/plugin install git://github.com/PRX/s3-swf-upload-plugin.git
 
 Example
 =======

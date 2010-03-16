@@ -24,7 +24,7 @@ module S3SwfUpload
       out = ""
 
       if !@include_s3_upload
-        out << '<script type="text/javascript" src="/javascripts/s3_upload.js"></script>' 
+        out << javascript_include_tag('s3_upload')
         @include_s3_upload = true
       end
 
@@ -34,7 +34,7 @@ module S3SwfUpload
               width:  #{width},
               height: #{height},
               initialMessage: '#{initial_message}',
-              doChecks: '#{do_checks}',
+              prefix: '#{prefix}',
               onSuccess: function(filename, filesize, contenttype){
                 #{success}
               },
@@ -44,21 +44,19 @@ module S3SwfUpload
               onFileSelected: function(filename, size, contenttype){
                 #{selected}
               },
+              onCancel:  function(status){
+                #{canceled}
+              }
             });
         </script>
 
         <div id="s3_swf#{@count}">
           Please <a href="http://www.adobe.com/go/getflashplayer">Update</a> your Flash Player to Flash v9.0.1 or higher...
         </div>
-
-        <div class="s3-swf-upload-link">
-        <a href="#uploadform#{@count}" onclick="s3_swf#{@count}.upload('#{prefix}')">#{upload}</a>
-        </div>
       )
       
       @count += 1
       out
-
     end
 
   end

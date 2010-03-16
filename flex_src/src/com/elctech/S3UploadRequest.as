@@ -14,7 +14,7 @@ package com.elctech {
      * 
      */
 	public class S3UploadRequest extends EventDispatcher {
-		
+
 		[Event(name="open", type="flash.events.Event.OPEN")]
         [Event(name="uploadCompleteData", type="flash.events.DataEvent.UPLOAD_COMPLETE_DATA")]        
         [Event(name="ioError", type="flash.events.IOErrorEvent.IO_ERROR")]
@@ -124,16 +124,16 @@ package com.elctech {
                 throw new Error("S3PostRequest object cannot be reused.  Create another S3PostRequest object to send another request to Amazon S3.");
             }
             _uploadStarted = true;
-            
+
             // Save the FileReference object so that it doesn't get GCed.
             // If this happens, we can lose events that should be dispatched.
             _fileReference = fileReference;
-            
+
             var postUrl:String = buildUrl();
             loadPolicyFile(postUrl);
             var urlRequest:URLRequest = new URLRequest(postUrl);
             urlRequest.method = URLRequestMethod.POST;
-            urlRequest.data = buildPostVariables();            
+            urlRequest.data = buildPostVariables();
             
             // set up event handlers *****************************************************
             fileReference.addEventListener(Event.OPEN, onOpen);
@@ -152,12 +152,13 @@ package com.elctech {
             
             var postVariables:URLVariables = new URLVariables();
             
-            postVariables.key             = _key;
-            postVariables.acl             = _options.acl;
-            postVariables.AWSAccessKeyId  = _accessKeyId;
-            postVariables.signature       = _options.signature;
-            postVariables["Content-Type"] = _options.ContentType;
-            postVariables.policy          = _options.policy;
+            postVariables.key                     = _key;
+            postVariables.acl                     = _options.acl;
+            postVariables.AWSAccessKeyId          = _accessKeyId;
+            postVariables.signature               = _options.signature;
+            postVariables["Content-Type"]         = _options.ContentType;
+            postVariables["Content-Disposition"]  = "attachment";
+            postVariables.policy                  = _options.policy;
             
             /**
              * Certain combinations of Flash player version and platform don't handle

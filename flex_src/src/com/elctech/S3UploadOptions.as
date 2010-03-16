@@ -25,16 +25,7 @@ package com.elctech {
          * Addition field
          */
         public var Secure:String;           /* A flag indicating whether HTTPS should be used. */
-        public var PrefixPath:String;
         public var FileName:String;
         public var FileSize:String;
-        public var SignatureQueryURL:String;
-        public var doChecks:String;         /* A flag indicating if the s3_uploads_controller should check the file name */
-
-        public var onSuccessCall:String  = "s3_swf.onSuccess";
-        public var onFailedCall:String   = "s3_swf.onFailed";
-        public var onSelectedCall:String = "s3_swf.onSelected";
-        public var onCancelCall:String   = "s3_swf.onCancel";
-
     }
 }

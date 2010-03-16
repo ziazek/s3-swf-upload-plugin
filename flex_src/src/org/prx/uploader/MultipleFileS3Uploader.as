@@ -1,9 +1,3 @@
-/*
-ToDos: 
-get hard coded values out of the colors and styles for error messages - a least make it a function
-  
-*/
-
 package org.prx.uploader {
 
     import com.adobe.net.MimeTypeMap;
@@ -38,7 +32,6 @@ package org.prx.uploader {
         //UI Vars
         private var _signatureUrl:String;
         private var _prefixPath:String;
-        private var _userMessage:Label;
         private var _browseButton:Button;
         private var _removeSelectedButton:Button;
         private var _removeAllButton:Button;
@@ -66,16 +59,20 @@ package org.prx.uploader {
         private var _maxFileSize:Number; //bytes
 
         private var _mimeMap:MimeTypeMap;
-        private var _mp2Filter:FileFilter;
+        private var _fileFilter:FileFilter;
 
         public var s3onSuccessCall:String;
         public var s3onFailedCall:String;
         public var s3onSelectedCall:String;
+        public var s3onInfoCall:String;
         public var s3onCancelCall:String;
 
         public function MultipleFileS3Uploader(signatureUrl:String,
+                                               initialMessage:String,
                                                prefixPath:String,
-                                               userMessage:Label,
+                                               maxFileSize:String,
+                                               fileTypes:String,
+                                               fileTypeDescs:String,
                                                browseButton:Button,
                                                uploadButton:Button,
                                                removeSelectedButton:Button,
@@ -85,7 +82,6 @@ package org.prx.uploader {
             // set up from args
             _prefixPath = prefixPath;
             _signatureUrl = signatureUrl;
-            _userMessage = userMessage;
             _browseButton = browseButton;
             _uploadButton = uploadButton;
             _removeSelectedButton = removeSelectedButton;
@@ -96,8 +92,8 @@ package org.prx.uploader {
             // other defaults
             _maxFileCount = 10;
             _mimeMap = new MimeTypeMap();
-            _mp2Filter = new FileFilter("MP2 Audio Files", "*.mp2");
-            _maxFileSize = 524288000;
+            _fileFilter = new FileFilter(fileTypeDescs, fileTypes);
+            _maxFileSize = parseInt(maxFileSize);
             _dateTimeFormatter = new DateFormatter();
             _dateTimeFormatter.formatString = "MM/DD/YYYY L:NN A";
 	        _totalbytes = 0;
@@ -106,8 +102,11 @@ package org.prx.uploader {
             s3onSuccessCall  = "s3_swf.onSuccess";
             s3onFailedCall   = "s3_swf.onFailed";
             s3onSelectedCall = "s3_swf.onSelected";
+            s3onInfoCall     = "s3_swf.onInfo";
             s3onCancelCall   = "s3_swf.onCancel";
             
+	        ExternalInterface.call(s3onInfoCall, initialMessage);
+
             init();
         }
         
@@ -163,7 +162,7 @@ package org.prx.uploader {
 
         //Browse for files
         private function browseFiles(event:Event):void{        
-            _fileref.browse([_mp2Filter]);
+            _fileref.browse([_fileFilter]);
         }
 
         //  called after user selected files form the browse dialouge box.
@@ -181,22 +180,21 @@ package org.prx.uploader {
 			                               getContentType(event.currentTarget.fileList[i].name));
             	}  else {
                 	dl.push(event.currentTarget.fileList[i]);
-                	trace(event.currentTarget.fileList[i].name + " too large");
-			        ExternalInterface.call(s3onFailedCall, 
-			                               event.currentTarget.fileList[i].name,
-			                               event.currentTarget.fileList[i].size,
-			                               getContentType(event.currentTarget.fileList[i].name));
+			        ExternalInterface.call(s3onFailedCall,
+			                               event.currentTarget.fileList[i].name + " too large, max is " + Math.round(_maxFileSize / 1024) + " kb");
             	}
             }	            
-            if (dl.length > 0) {
-            	for (i=0;i<dl.length;i++) {
-                	msg += String(dl[i].name + " is too large. \n");
-            	}
-                	mx.controls.Alert.show(msg + "Max File Size is: " + Math.round(_maxFileSize / 1024) + " kb","File Too Large",4,null).clipContent;
-            }
+
+            /* Don't do this here, just make the external interface call above. */
+            /*if (dl.length > 0) {
+                for (i=0;i<dl.length;i++) {
+                    msg += String(dl[i].name + " is too large. \n");
+                }
+                    mx.controls.Alert.show(msg + "Max File Size is: " + Math.round(_maxFileSize / 1024) + " kb","File Too Large",4,null).clipContent;
+            }*/
             
             if(_files.length > 0) {
-                _userMessage.text = "Click 'Upload' to start loading files, or 'Browse...' to select more.";                
+    	        ExternalInterface.call(s3onInfoCall, "Click 'Upload' to start loading files, or 'Browse...' to select more.");
             }
         }
         
@@ -243,10 +241,7 @@ package org.prx.uploader {
             if (xml.errorMessage != "") {
                 resetProgressBar();
                 _uploadButton.enabled = true;
-                _userMessage.visible = true;
-                _userMessage.text = "Error! Please try again, or contact us for help.";
-                _userMessage.setStyle("color","#770000");
-                ExternalInterface.call(s3onFailedCall);
+                ExternalInterface.call(s3onFailedCall, "Error! Please try again, or contact us for help.");
                 return;
             }
 
@@ -258,18 +253,17 @@ package org.prx.uploader {
             request.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, s3CompleteHandler);
 
             try {
-                _userMessage.text = "Upload started...";
+    	        ExternalInterface.call(s3onInfoCall, "Upload started...");
                 request.upload(_file);
             } catch(e:Error) {
-                _userMessage.text = "Upload error!";
-                _userMessage.setStyle("color","#770000");
+                ExternalInterface.call(s3onFailedCall, "Upload error!");
                 trace("An error occurred: " + e);
             }
         }
 
         // called after the file is opened before upload    
         private function s3OpenHandler(event:Event):void{
-            _userMessage.text = "";
+	        ExternalInterface.call(s3onInfoCall, "");
             trace(event);
             trace('openHandler triggered');
             _files;
@@ -284,21 +278,19 @@ package org.prx.uploader {
         // only called if there is an  error detected by flash player browsing or uploading a file   
         private function s3IoErrorHandler(event:IOErrorEvent):void{
             //trace('And IO Error has occured:' +  event);
-            _userMessage.text = "Error! Please retry, or contact us for help.";
             trace(s3onFailedCall);
-            ExternalInterface.call(s3onFailedCall);
-            trace(event);
-            mx.controls.Alert.show(String(event),"ioError",0);
+            ExternalInterface.call(s3onFailedCall, "Error! Please retry, or contact us for help: " + String(event));
+            /*trace(event);*/
+            /*mx.controls.Alert.show(String(event),"ioError",0);*/
         }    
 
         // only called if a security error detected by flash player such as a sandbox violation
         private function s3SecurityErrorHandler(event:SecurityErrorEvent):void{
             //trace("securityErrorHandler: " + event);
-            _userMessage.text = "Error, access denied.";
             trace(s3onFailedCall);
-            ExternalInterface.call(s3onFailedCall);
-            trace(event);
-            mx.controls.Alert.show(String(event),"Security Error",0);
+            ExternalInterface.call(s3onFailedCall, "Error, access denied: " + String(event));
+            /*trace(event);*/
+            /*mx.controls.Alert.show(String(event),"Security Error",0);*/
         }
         //  This function its not required
         private function s3CancelHandler(event:Event):void{
@@ -311,7 +303,6 @@ package org.prx.uploader {
             trace(s3onSuccessCall);
             ExternalInterface.call(s3onSuccessCall, _options.FileName, _options.FileSize, _options.ContentType);
             trace(event);
-            _userMessage.text = "Complete!";
             _files.removeItemAt(0);
             if (_files.length > 0){
             	_totalbytes = 0;
@@ -319,7 +310,8 @@ package org.prx.uploader {
             } else {
                 setupCancelButton(false);
                  _uploadProgressBar.label = "Uploads complete";
-                 _userMessage.text = "Uploads complete";
+     	        ExternalInterface.call(s3onInfoCall, "All uploads complete");
+                /* not sure these next 2 lines are necessary... */
                  var uploadCompleted:Event = new Event(Event.COMPLETE);
                 dispatchEvent(uploadCompleted);
             }
@@ -338,7 +330,7 @@ package org.prx.uploader {
         }
 
         private function sigOpenHandler(event:Event):void {
-            _userMessage.text = "Preparing...";
+ 	        ExternalInterface.call(s3onInfoCall, "Preparing...");
             trace("openHandler: " + event);
         }
         private function sigProgressHandler(event:ProgressEvent):void {
@@ -346,8 +338,8 @@ package org.prx.uploader {
         }
         private function sigSecurityErrorHandler(event:SecurityErrorEvent):void {
             trace("securityErrorHandler: " + event);
-            _userMessage.text = "Security error!";
-            ExternalInterface.call(s3onFailedCall);
+            ExternalInterface.call(s3onFailedCall, "Security error!");
+            /*mx.controls.Alert.show(String(event),"securityError",0);*/
         }
         private function sigHttpStatusHandler(event:HTTPStatusEvent):void {
             trace("httpStatusHandler: " + event);
@@ -355,13 +347,13 @@ package org.prx.uploader {
         private function sigIoErrorHandler(event:IOErrorEvent):void {
             trace("ioErrorHandler: " + event);
             trace(s3onFailedCall);
-            _userMessage.text = "Network error!";
-            ExternalInterface.call(s3onFailedCall);
+            ExternalInterface.call(s3onFailedCall, "Network error!");
+            /*mx.controls.Alert.show(String(event),"networkError",0);*/
         }
 
         private function uploadFiles(event:Event):void{
             if (_files.length > 0){
-                _userMessage.text = 'Initiating...';
+     	        ExternalInterface.call(s3onInfoCall, 'Initiating...');
                 _file = FileReference(_files.getItemAt(0));
                 getSignature();
                 setupCancelButton(true);
@@ -371,7 +363,7 @@ package org.prx.uploader {
         //Remove Selected File From Queue
         private function removeSelectedFileFromQueue(event:Event):void{
             if (_filesDataGrid.selectedIndex >= 0){
-            _files.removeItemAt( _filesDataGrid.selectedIndex);
+                _files.removeItemAt( _filesDataGrid.selectedIndex);
             }
         }
 

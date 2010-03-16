@@ -1,22 +1,21 @@
 module S3SwfUpload
   module ViewHelpers
     def s3_swf_upload_tag(options = {})
-      height     = options[:height] || 35
-      width      = options[:width]  || 300
-      success    = options[:success]  || ''
-      failed     = options[:failed]  || ''
-      selected   = options[:selected]  || ''
-      canceled   = options[:canceled] || ''
-      prefix     = options[:prefix] || ''
-      upload     = options[:upload] || 'Upload' 
-      initial_message    = options[:initial_message] || 'Select file to upload...'
-      do_checks = options[:do_checks] || "0"
+      height                 = options[:height] || 175
+      width                  = options[:width]  || 550
+      success                = options[:success]  || ''
+      failed                 = options[:failed]  || ''
+      selected               = options[:selected]  || ''
+      canceled               = options[:canceled] || ''
+      info                   = options[:info] || ''
+      prefix                 = options[:prefix] || ''
+      upload                 = options[:upload] || 'Upload'
+      initial_message        = options[:initial_message] || 'Select file to upload...'      
+      max_file_size          = options[:maxFileSize] || '524288000'
+      file_types             = options[:fileTypes] || "*.*"
+      file_type_descriptions = options[:fileTypeDescs] || "All Files"
 
-      if do_checks != "1" && do_checks != "0"
-        raise "Ooops, do_checks has to be either '0' or '1' (a string)"
-      end
-
-      prefix = prefix + "/" unless prefix == ""
+      prefix                 = prefix + "/" unless prefix == ""
 
       @include_s3_upload ||= false 
       @count ||= 1
@@ -31,6 +30,7 @@ module S3SwfUpload
       out << %(<a name="uploadform#{@count}"></a>
             <script type="text/javascript">
             var s3_swf#{@count} = s3_swf_init('s3_swf#{@count}', {
+              wmode:, "transparent",
               width:  #{width},
               height: #{height},
               initialMessage: '#{initial_message}',
@@ -43,6 +43,9 @@ module S3SwfUpload
               },
               onFileSelected: function(filename, size, contenttype){
                 #{selected}
+              },
+              onInfo:  function(status){
+                #{info}
               },
               onCancel:  function(status){
                 #{canceled}

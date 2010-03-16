@@ -18,11 +18,20 @@ private function registerCallbacks():void {
     }
 }
 
-private function init(signatureUrl:String, initialMessage:String="mxml", prefixPath:String="s3_swf_upload"):void {
+private function init(signatureUrl:String, 
+                      initialMessage:String, 
+                      prefixPath:String, 
+                      maxFileSize:String,
+                      fileTypes:String,
+                      fileTypeDescs:String
+                      ):void {
 
-    _multipleFileUploader = new MultipleFileS3Uploader(signatureUrl,
+    _multipleFileUploader = new MultipleFileS3Uploader(signatureUrl,    
+                                                       initialMessage,
                                                        prefixPath,
-                                                       userMessage,
+                                                       maxFileSize,
+                                                       fileTypes,
+                                                       fileTypeDescs,
                                                        browseButton,
                                                        uploadButton,
                                                        removeSelectedButton,

@@ -16,21 +16,35 @@ function s3_swf_init(id, options)
   version         = (options.version == undefined) ? '9.0.0' : options.version;
   initialMessage  = (options.initialMessage == undefined) ? "js" : options.initialMessage;
   prefix          = (options.prefix == undefined) ? "" : options.prefix;
+  maxFileSize     = (options.maxFileSize == undefined) ? '524288000' : options.maxFileSize;
+  fileTypes       = (options.fileTypes == undefined) ? "*.*" : options.fileTypes;
+  fileTypeDescs   = (options.fileTypeDescs == undefined) ? "All Files" : options.fileTypeDescs;
+
   onFileSelected  = (options.onFileSelected == undefined) ? function(){} : options.onFileSelected;
   onSuccess       = (options.onSuccess == undefined) ? function(){} : options.onSuccess;
   onFailed        = (options.onFailed == undefined) ? function(){} : options.onFailed;
+  onInfo          = (options.onInfo == undefined) ? function(){} : options.onInfo;
   onCancel        = (options.onCancel == undefined) ? function(){} : options.onCancel;
+  
 
-  s3_upload_swfobject.embedSWF("/s3_upload.swf", id, width, height, version);
+  var flashvars = {};
+  var params = {};
+  var attributes = {};
+  params.wmode = "transparent";
+  params.menu = "false";
+  params.quality = "low";
 
+  s3_upload_swfobject.embedSWF("/s3_upload.swf", id, width, height, version, false, flashvars, params, attributes);
+ 
   signature_url = window.location.protocol + '//' + window.location.host + '/s3_uploads';
   
   s3_swf = {
     obj: function() { return document[id]; },
-    init: function() { this.obj().init(signature_url, initialMessage, prefix); },
+    init: function() { this.obj().init(signature_url, initialMessage, prefix, maxFileSize, fileTypes, fileTypeDescs); },
     onSuccess: onSuccess,
     onFailed: onFailed,
     onSelected: onFileSelected, 
+    onInfo: onInfo,
     onCancel: onCancel
   }
 

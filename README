@@ -59,25 +59,29 @@ Usage
 
 7. If you want to customize its behavior, here's a more complex example:
 
-    <%= s3_swf_upload_tag(
-        :width => 550,
-        :height => 175,
-        :success => "jQuery.post('/file_upload', {'uuid':'#{@uuid}', 
-                                                  'filename':filename,
-                                                  'filesize':filesize,
-                                                  'contenttype':contenttype}, 
-                                 null, 'script');",                                 
-        :failed => 'alert("Failed: " + status);',
-        :prefix => "prefix_in_bucket/#{@uuid}",
-        :initial_message=> 'Click "Browse..." to find files to upload.')
+    <%= raw s3_swf_upload_tag(
+            :width => 390,
+            :height => 150,
+            :file_types=>'*.jpg;*.gif;*.png;',
+            :file_type_descriptions =>"Image files.",
+            :success => "$.post('/attachments.js',{'filename':filename, 
+                                                   'filesize':filesize,
+                                                   'content_type':contenttype,
+                                                   'authenticity_token':'#{form_authenticity_token}'}, 
+                                                   null, 'script');",
+            :failed => 'alert("failed: " + status);',
+            :info => '$("#upload-messages").html(status);',
+            :prefix => "public/attachment",
+            :initial_message=> 'Click "Browse..." to find files to upload.')
     %>
+    </div>
+    <div id="upload-messages" name="upload-messages" class="notice"></div>
 
 
   In this case, files will be uploaded to:
-    http://bucket.s3.amazonasw.com/prefix_in_bucket/uuid_value
-  and when successful, will post the information about the file uploaded, including this UUID, to the file_upload controller.
-
+    http://bucket.s3.amazonasw.com/public/attachment
+  and when successful, will post the information about the file uploaded to the attachments controller as a json post using JQuery.
 
 Original plugin is Copyright (c) 2008 elctech, released under the MIT license
 
-Updates to plugin Copyright (c) 2010 PRX, released under the MIT license
+Updates to plugin for multiple file uploader are Copyright (c) 2010 PRX, released under the MIT license

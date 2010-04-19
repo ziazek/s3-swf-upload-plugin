@@ -11,9 +11,9 @@ module S3SwfUpload
       prefix                 = options[:prefix] || ''
       upload                 = options[:upload] || 'Upload'
       initial_message        = options[:initial_message] || 'Select file to upload...'      
-      max_file_size          = options[:maxFileSize] || '524288000'
-      file_types             = options[:fileTypes] || "*.*"
-      file_type_descriptions = options[:fileTypeDescs] || "All Files"
+      max_file_size          = options[:max_file_size] || '524288000'
+      file_types             = options[:file_types] || "*.*"
+      file_type_descriptions = options[:file_type_descriptions] || "All Files"
 
       prefix                 = prefix + "/" unless prefix == ""
 
@@ -30,9 +30,11 @@ module S3SwfUpload
       out << %(<a name="uploadform#{@count}"></a>
             <script type="text/javascript">
             var s3_swf#{@count} = s3_swf_init('s3_swf#{@count}', {
-              wmode:, "transparent",
+              wmode: 'transparent',
               width:  #{width},
               height: #{height},
+              fileTypes: '#{file_types}',
+              fileTypeDescs: '#{file_type_descriptions}',
               initialMessage: '#{initial_message}',
               prefix: '#{prefix}',
               onSuccess: function(filename, filesize, contenttype){

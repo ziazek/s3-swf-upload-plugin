@@ -10,7 +10,7 @@
 
     <mx:Script source="S3Uploader.as"/>
 
-    <mx:VBox width="550" height="175">
+    <mx:VBox width="385" height="150">
 
         <mx:DataGrid id="filesDataGrid" 
                      left="0" 

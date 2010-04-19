@@ -95,7 +95,8 @@ package org.prx.uploader {
             _fileFilter = new FileFilter(fileTypeDescs, fileTypes);
             _maxFileSize = parseInt(maxFileSize);
             _dateTimeFormatter = new DateFormatter();
-            _dateTimeFormatter.formatString = "MM/DD/YYYY L:NN A";
+            /*_dateTimeFormatter.formatString = "MM/DD/YYYY L:NN A";*/
+            _dateTimeFormatter.formatString = "MM/DD/YY";
 	        _totalbytes = 0;
 
             // js callback functions
@@ -142,14 +143,14 @@ package org.prx.uploader {
 	        _nameColumn.headerText= "File";
 
 	        _sizeColumn.dataField = "size";
-	        _sizeColumn.headerText = "File Size";
+	        _sizeColumn.headerText = "Size";
 	        _sizeColumn.labelFunction = bytesColumnToString as Function;
-	        _sizeColumn.width = 60;
+	        _sizeColumn.width = 52;
 
 	        _updatedColumn.dataField = "modificationDate";
-	        _updatedColumn.headerText = "Date Modified";
+	        _updatedColumn.headerText = "Modified";
             _updatedColumn.labelFunction = dateTimeColumnToString as Function;
-	        _updatedColumn.width = 150;
+	        _updatedColumn.width = 64;
 	        
 	        _columns = new Array(_nameColumn, _sizeColumn, _updatedColumn);
 	        _filesDataGrid.columns = _columns

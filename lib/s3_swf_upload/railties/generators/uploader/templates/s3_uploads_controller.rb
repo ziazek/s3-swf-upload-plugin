@@ -5,7 +5,7 @@ class S3UploadsController < ApplicationController
   # The plugin flash script has to be able to access this controller, so don't block it with authentication!
   # You can delete the following line if you have no authentication in your app.
 
-  skip_before_filter  :<*** your authentication filter, if any, goes here!>, [:only => "index"]
+  # skip_before_filter  :<*** your authentication filter, if any, goes here!>, [:only => "index"]
 
 
   # --- no code for modification below here ---

@@ -1,22 +1,14 @@
+require 'rubygems'
 require 'rake'
 require 'rake/testtask'
-require 'rake/rdoctask'
+require 'echoe'
 
-desc 'Default: run unit tests.'
-task :default => :test
-
-desc 'Test the s3_swf_upload plugin.'
-Rake::TestTask.new(:test) do |t|
-  t.libs << 'lib'
-  t.pattern = 'test/**/*_test.rb'
-  t.verbose = true
+Echoe.new('s3_swf_upload', '0.0.1') do |p|
+  p.description    = "Rails 3 gem that allows you to upload files directly to S3 from your application"
+  p.url            = "http://github.com/nathancolgate/s3-swf-upload-plugin"
+  p.author         = "Nathan Colgate"
+  p.email          = "nathan@brandnewbox.com"
+  p.ignore_pattern = FileList[".gitignore"]
+  p.development_dependencies = []
 end
 
-desc 'Generate documentation for the s3_swf_upload plugin.'
-Rake::RDocTask.new(:rdoc) do |rdoc|
-  rdoc.rdoc_dir = 'rdoc'
-  rdoc.title    = 'S3SwfUpload'
-  rdoc.options << '--line-numbers' << '--inline-source'
-  rdoc.rdoc_files.include('README')
-  rdoc.rdoc_files.include('lib/**/*.rb')
-end

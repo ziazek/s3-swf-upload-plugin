@@ -1,11 +1,24 @@
 package com.elctech {
 
-	import flash.events.*;
-	import flash.net.*;
+	// import flash.events.*;
+	import flash.events.EventDispatcher;
+	import flash.events.ProgressEvent;
+	import flash.events.Event;
+	import flash.events.IOErrorEvent;
+	import flash.events.SecurityErrorEvent;
+	import flash.events.HTTPStatusEvent;
+	import flash.events.DataEvent;
+	
+	// import flash.net.*;
+  import flash.net.FileReference;
+	import flash.net.URLVariables;
+  import flash.net.URLRequest;
+	import flash.net.URLRequestMethod;
+
 	import flash.system.Security;
 	import flash.xml.XMLDocument;
 	import flash.xml.XMLNode;
-	import mx.controls.Alert;
+	// import mx.controls.Alert;
 	
 	/**
      * This class encapsulates a POST request to S3.

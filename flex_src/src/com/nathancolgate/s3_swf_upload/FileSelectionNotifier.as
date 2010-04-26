@@ -12,7 +12,7 @@ package com.nathancolgate.s3_swf_upload {
 		}
         
 		public function send(file:FileReference, contentType:String):void {
-			ExternalInterface.call(_notifyCall,file.name,file.size,contentType);
+			ExternalInterface.call(_notifyCall,file,contentType);
 		}
 
 	}

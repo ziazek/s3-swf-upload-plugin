@@ -23,13 +23,17 @@ private function init(signatureUrl:String,
                       maxFileSize:Number,
 											maxFileCount:Number,
                       fileTypes:String,
-                      fileTypeDescs:String
-                      ):void {
+                      fileTypeDescs:String,
+                      initialStatus:String,
+											multipleFiles:Boolean):void {
+												
     _multipleFileUploader = new MultipleFileS3Uploader(signatureUrl,   
-                                                       prefixPath,
-                                                       maxFileSize,
-                                                       fileTypes,
-                                                       fileTypeDescs,
-                                                       browseButton,
-																											maxFileCount);
+																												prefixPath,
+																												maxFileSize,
+																												fileTypes,
+																												fileTypeDescs,
+																												browseButton,
+																												maxFileCount,
+																												initialStatus,
+																												multipleFiles);
 }

@@ -1,24 +1,23 @@
 package com.nathancolgate.s3_swf_upload {
 
-	import com.adobe.net.MimeTypeMap;
-
+	// S3 Connectivity
 	import com.elctech.S3UploadOptions;
 	import com.elctech.S3UploadRequest;
-
-	import mx.collections.ArrayCollection;
-	import mx.controls.Button;
-	// import mx.controls.DataGrid;
-	// import mx.controls.dataGridClasses.*;
-	import mx.events.CollectionEvent;
 	
 	//Events
 	import flash.events.ProgressEvent;
+	import flash.events.Event;
 	import flash.events.MouseEvent;
 	import flash.events.IOErrorEvent;
 	import flash.events.SecurityErrorEvent;
 	import flash.events.HTTPStatusEvent;
 	import flash.events.DataEvent;
-	
+
+	// Misc
+	import com.adobe.net.MimeTypeMap;
+	import mx.collections.ArrayCollection;
+	import mx.controls.Button;
+	import mx.events.CollectionEvent;
 	import flash.external.ExternalInterface;
 	import flash.net.FileFilter;
 	import flash.net.FileReference;
@@ -29,48 +28,39 @@ package com.nathancolgate.s3_swf_upload {
 	import flash.net.URLRequestMethod;
 	import flash.net.URLLoaderDataFormat;
 
+	// S3 SWF Upload Classes
 	import com.nathancolgate.s3_swf_upload.ErrorNotifier;
 	import com.nathancolgate.s3_swf_upload.StatusNotifier;
 	import com.nathancolgate.s3_swf_upload.FileSelectionNotifier;
 	import com.nathancolgate.s3_swf_upload.ProgressNotifier;
 	import com.nathancolgate.s3_swf_upload.SuccessNotifier;
 	import com.nathancolgate.s3_swf_upload.CompletionNotifier;
-
-	import com.nathancolgate.s3_swf_upload.ClearingManager;
-	import com.nathancolgate.s3_swf_upload.CancelingManager;
-	import com.nathancolgate.s3_swf_upload.UploadingManager;
+	import com.nathancolgate.s3_swf_upload.CollectionChangeNotifier;
+	import com.nathancolgate.s3_swf_upload.ResetButton;
+	import com.nathancolgate.s3_swf_upload.StopButton;
+	import com.nathancolgate.s3_swf_upload.StartButton;
 
 	public class MultipleFileS3Uploader {
-
-		//UI Vars
-		private var _signatureUrl:String;
-		private var _prefixPath:String;
-		private var _browseButton:Button;
-		
-		/*
-		private var _filesDataGrid:DataGrid;
-
-	
-		//DataGrid Columns
-		private var _nameColumn:DataGridColumn;
-		private var _sizeColumn:DataGridColumn;
-		private var _columns:Array;
-		*/
 		
 		//File Reference Vars
-		[Bindable]
 		private var _files:ArrayCollection;
-		private var _fileref:FileReferenceList
 		private var _file:FileReference;
-		private var _totalbytes:Number;
+		private var _multiFileDialogBox:FileReferenceList;
+		private var _singleFileDialogBox:FileReference;
+		private var _multipleFiles:Boolean;
 
 		//config vars
 		private var _options:S3UploadOptions;
 		private var _maxFileCount:Number;
 		private var _maxFileSize:Number; //bytes
-
+		private var _signatureUrl:String;
+		private var _prefixPath:String;
+		private var _browseButton:Button;
 		private var _mimeMap:MimeTypeMap;
 		private var _fileFilter:FileFilter;
+		private var _initialStatus:String;
+		private var _queueFileSize:Number; //bytes
+		private var _queueSentSize:Number; //bytes
 
 		// External Notifiers
 		private var _statusNotifier:StatusNotifier;
@@ -79,11 +69,12 @@ package com.nathancolgate.s3_swf_upload {
 		private var _progressNotifier:ProgressNotifier;
 		private var _successNotifier:SuccessNotifier;
 		private var _completionNotifier:CompletionNotifier;
+		private var _collectionChangeNotifier:CollectionChangeNotifier;
 
-		// External Managers
-		private var _clearButton:ClearingManager;
-		private var _cancelButton:CancelingManager;
-		private var _uploadButton:UploadingManager;
+		// External Buttons
+		private var _resetButton:ResetButton;
+		private var _stopButton:StopButton;
+		private var _startButton:StartButton;
 
 		public function MultipleFileS3Uploader(signatureUrl:String,
 																						prefixPath:String,
@@ -91,16 +82,19 @@ package com.nathancolgate.s3_swf_upload {
 																						fileTypes:String,
 																						fileTypeDescs:String,
 																						browseButton:Button,
-																						maxFileCount:Number) {
+																						maxFileCount:Number,
+																						initialStatus:String,
+																						multipleFiles:Boolean) {
 			
 			// set up from args
-			_signatureUrl = signatureUrl;
-			_prefixPath = prefixPath;
-			_maxFileSize = maxFileSize;
-			_fileFilter = new FileFilter(fileTypeDescs, fileTypes);
-			_browseButton = browseButton;
-			_maxFileCount = maxFileCount;
-			// _filesDataGrid = filesDataGrid;
+			_signatureUrl 	= signatureUrl;
+			_prefixPath 		= prefixPath;
+			_maxFileSize 		= maxFileSize;
+			_fileFilter 		= new FileFilter(fileTypeDescs, fileTypes);
+			_browseButton 	= browseButton;
+			_maxFileCount 	= maxFileCount;
+			_initialStatus 	= initialStatus;
+			_multipleFiles 	= multipleFiles;
 
 			init();
 		}
@@ -111,88 +105,79 @@ package com.nathancolgate.s3_swf_upload {
 			
 			// other defaults
 			_mimeMap = new MimeTypeMap();
-			_totalbytes = 0;
 
 			// Setup File Array Collection and FileReference
 			_files = new ArrayCollection();
-			_fileref = new FileReferenceList;
 			_file = new FileReference;
+			_multiFileDialogBox = new FileReferenceList;
+			_singleFileDialogBox = new FileReference;
 			
-			// Build the Managers
-			_clearButton 		= new ClearingManager("s3_swf.manageClearing");
-			_cancelButton 	= new CancelingManager("s3_swf.manageCanceling");
-			_uploadButton 	= new UploadingManager("s3_swf.manageUploading");
+			// Build the External Buttons
+			_resetButton 	= new ResetButton("s3_swf.enableResetButton");
+			_stopButton 	= new StopButton("s3_swf.enableStopButton");
+			_startButton 	= new StartButton("s3_swf.enableStartButton");
 			
 			// Build the Notifiers
-			_errorNotifier					= new ErrorNotifier("s3_swf.onError");
-			_statusNotifier					= new StatusNotifier("s3_swf.onStatus");
-			_fileSelectionNotifier	= new FileSelectionNotifier("s3_swf.onFileSelection");
-			_progressNotifier				= new ProgressNotifier("s3_swf.onProgress");
-			_successNotifier				= new SuccessNotifier("s3_swf.onSuccess");
-			_completionNotifier			= new CompletionNotifier("s3_swf.onCompletion");
+			_errorNotifier						= new ErrorNotifier("s3_swf.onError");
+			_statusNotifier						= new StatusNotifier("s3_swf.onStatus");
+			_fileSelectionNotifier		= new FileSelectionNotifier("s3_swf.onFileSelection");
+			_progressNotifier					= new ProgressNotifier("s3_swf.onProgress");
+			_successNotifier					= new SuccessNotifier("s3_swf.onSuccess");
+			_completionNotifier				= new CompletionNotifier("s3_swf.onCompletion");
+			_collectionChangeNotifier = new CollectionChangeNotifier("s3_swf.onCollectionChange");
+			
+			// Send the initial Status, if applicable
+			if(_initialStatus != ''){
+				_statusNotifier.send(_initialStatus);
+			}
 
 			// Add Event Listeners/Callbacks to UI buttons...
-			_browseButton.addEventListener(MouseEvent.CLICK, browseFiles);
-			ExternalInterface.addCallback("upload", uploadFiles);
-			ExternalInterface.addCallback("clear", clearFileQueue);
-			ExternalInterface.addCallback("cancel", cancelFileIO);
+			_browseButton.addEventListener(MouseEvent.CLICK, browseHandler);
+			ExternalInterface.addCallback("start", startHandler);
+			ExternalInterface.addCallback("reset", resetHandler);
+			ExternalInterface.addCallback("stop", stopHandler);
+			ExternalInterface.addCallback("delete", deleteHandler);
 			
 			// ... and disable UI Buttons;
-			_clearButton.enabled = false;
-			_cancelButton.enabled = false;
-			_uploadButton.enabled = false;
+			_resetButton.enabled = false;
+			_stopButton.enabled = false;
+			_startButton.enabled = false;
 
 			// Add Listeners to the file management
-			_fileref.addEventListener(Event.SELECT, selectHandler);
-			_files.addEventListener(CollectionEvent.COLLECTION_CHANGE, popDataGrid);
+			_multiFileDialogBox.addEventListener(Event.SELECT, selectHandler);
+			_singleFileDialogBox.addEventListener(Event.SELECT, selectHandler);
+			_files.addEventListener(CollectionEvent.COLLECTION_CHANGE, collectionChangeHandler);
 
-			/*
-			// Set Up DataGrid UI
-			_nameColumn = new DataGridColumn;
-			_sizeColumn = new DataGridColumn;
-			// _updatedColumn = new DataGridColumn;
-
-			_nameColumn.dataField = "name";
-			_nameColumn.headerText= "File";
-
-			_sizeColumn.dataField = "size";
-			_sizeColumn.headerText = "Size";
-			_sizeColumn.labelFunction = bytesColumnToString as Function;
-			_sizeColumn.width = 52;
-
-			// _updatedColumn.dataField = "modificationDate";
-			// _updatedColumn.headerText = "Modified";
-			// _updatedColumn.labelFunction = dateTimeColumnToString as Function;
-			// _updatedColumn.width = 64;
-
-			// _columns = new Array(_nameColumn, _sizeColumn, _updatedColumn);
-			_columns = new Array(_nameColumn, _sizeColumn);
-			_filesDataGrid.columns = _columns
-			_filesDataGrid.sortableColumns = false;
-			_filesDataGrid.dataProvider = _files;
-			_filesDataGrid.dragEnabled = false;
-			_filesDataGrid.dragMoveEnabled = false;
-			_filesDataGrid.dropEnabled = false;
-			*/
 		}
 
 		// called when the browse button is clicked
 		// Browse for files
-		private function browseFiles(event:Event):void{        
-			_fileref.browse([_fileFilter]);
+		private function browseHandler(event:Event):void{
+			if(_multipleFiles == true){
+				_multiFileDialogBox.browse([_fileFilter]);
+			} else {
+				_singleFileDialogBox.browse([_fileFilter]);
+			}
 		}
-		
+
 		// Called when the upload button is clicked
-		private function uploadFiles():void{
+		// These are the things we only want to do one time
+		private function startHandler():void{
 			if (_files.length > 0){
-				_statusNotifier.send('Initiating...');
-				_file = FileReference(_files.getItemAt(0));
-				getSignature();
-				// Manage the controls
+				// Update the Overall File Size Queue
+				var i:int;
+				_queueFileSize = 0;
+				_queueSentSize = 0;
+				for(i=0;i < _files.length;i++){
+					_queueFileSize +=  _files[i].size;
+				}
+				// Manage the buttons
 				_browseButton.enabled = false;
-				_clearButton.enabled = false;
-				_uploadButton.enabled = false;
-				_cancelButton.enabled = true;
+				_resetButton.enabled = false;
+				_startButton.enabled = false;
+				_stopButton.enabled = true;
+				// Now start kicking off the files
+				uploadFiles();
 			} else {
 				_errorNotifier.send('You must select at least one file to upload');
 			}
@@ -200,69 +185,90 @@ package com.nathancolgate.s3_swf_upload {
 		
 		// Called when th clear button is clicked
 		// Remove all files from the upload cue;
-		private function clearFileQueue():void{
+		private function resetHandler():void{
 			_files.removeAll();
 		}
 		
 		// Called when the cancel button is clicked
 		// Cancel Current File Upload
-		private function cancelFileIO():void{
+		private function stopHandler():void{
 			_file.cancel();
 			// Manage the buttons
 			_browseButton.enabled = true;
-			_clearButton.enabled = true;
-			_uploadButton.enabled = true;
-			_cancelButton.enabled = false;
+			_resetButton.enabled = true;
+			_startButton.enabled = true;
+			_stopButton.enabled = false;
+		}
+		
+		//Remove Selected File From Queue
+		private function deleteHandler(file_index:Number):void{
+			try {
+				_files.removeItemAt(file_index);
+			} catch(e:Error) {
+				_errorNotifier.send('The specified file could not be found in the queue');
+			}
 		}
 
 		// whenever the _files arraycollection changes this function is called 
-		// to make sure the datagrid data jives
-		private function popDataGrid(event:CollectionEvent):void{                
-			// Updates the total bytes var
-			var i:int;
-			_totalbytes = 0;
-			for(i=0;i < _files.length;i++){
-				_totalbytes +=  _files[i].size;
-			}
-			
+		private function collectionChangeHandler(event:CollectionEvent):void{
 			// handles UPLOAD and CLEAR states based on number of files in the cue;
 			if (_files.length > 0){  
-				_uploadButton.enabled = true;
-				_clearButton.enabled = true;
+				_startButton.enabled = true;
+				_resetButton.enabled = true;
 			} else {
-				_uploadButton.enabled = false;
-				_clearButton.enabled = false;
+				_startButton.enabled = false;
+				_resetButton.enabled = false;
 			}
+			_collectionChangeNotifier.send(_files);
 		}
 		      
 
 		//  called after user selected files form the browse dialouge box.
 		private function selectHandler(event:Event):void {
-			var i:int;
-			var msg:String ="";
-			var dl:Array = [];
-			for (i=0;i < event.currentTarget.fileList.length; i ++){
-				if (checkFileSize(event.currentTarget.fileList[i].size)){
-					_files.addItem(event.currentTarget.fileList[i]);
-					_fileSelectionNotifier.send(event.currentTarget.fileList[i],getContentType(event.currentTarget.fileList[i].name));
-					// trace("under size " + event.currentTarget.fileList[i].size);
-				}  else {
-					dl.push(event.currentTarget.fileList[i]);
-					_errorNotifier.send(event.currentTarget.fileList[i].name + " too large, max is " + Math.round(_maxFileSize / 1024) + " kb");
+			var remainingSpots:int = _maxFileCount - _files.length;
+			var tooMany:Boolean = false;
+			
+			if(_multipleFiles == true){
+				// Add multiple files to the _files array
+				if(event.currentTarget.fileList.length > remainingSpots) { tooMany = true; }
+				var i:int;
+				for (i=0;i < remainingSpots; i ++){
+			    addFileToQueue(event.currentTarget.fileList[i]);
 				}
-			}	            
-
-			/* Don't do this here, just make the external interface call above. */
-			/*if (dl.length > 0) {
-			for (i=0;i<dl.length;i++) {
-			msg += String(dl[i].name + " is too large. \n");
+			} else {
+				// Add one single files to the _files array
+				if(remainingSpots > 0) {
+					addFileToQueue(FileReference(event.target));
+				} else {
+					tooMany = true;
+				}
 			}
-			mx.controls.Alert.show(msg + "Max File Size is: " + Math.round(_maxFileSize / 1024) + " kb","File Too Large",4,null).clipContent;
-			}*/
-
+			
+			if(tooMany == true) {
+				_errorNotifier.send("You can only upload "+_maxFileCount+" files at a time");
+			}
+			
 			if(_files.length > 0) {
 				_statusNotifier.send("Click 'Upload' to start loading files, or 'Browse...' to select more.");
 			}
+		}
+		
+		
+		private function addFileToQueue(file:FileReference):void{
+			if (checkFileSize(file.size)){
+				_files.addItem(file);
+				_fileSelectionNotifier.send(file,getContentType(file.name));
+			}  else {
+				_errorNotifier.send(file.name + " too large, max is " + Math.round(_maxFileSize / 1024) + " kb");
+			}
+		}
+		
+		// Called when the upload button is clicked
+		private function uploadFiles():void{
+			_file = FileReference(_files.getItemAt(0));
+			_statusNotifier.send("Initiating "+_file.name+"...");
+			// And away it goes!
+			getSignature();
 		}
 
 		/* SIGNATURE */
@@ -295,29 +301,21 @@ package com.nathancolgate.s3_swf_upload {
     }
 
 		private function sigOpenHandler(event:Event):void {
-		_statusNotifier.send("Preparing...");
-		// trace("openHandler: " + event);
+			_statusNotifier.send("Preparing "+_file.name+"...");
 		}
 
 		private function sigProgressHandler(event:ProgressEvent):void {
-		// trace("progressHandler loaded:" + event.bytesLoaded + " total: " + event.bytesTotal);
 		}
 
 		private function sigSecurityErrorHandler(event:SecurityErrorEvent):void {
-		// trace("securityErrorHandler: " + event);
-		_errorNotifier.send("Security error!");
-		// mx.controls.Alert.show(String(event),"securityError",0);
+			_errorNotifier.send("Signature Security Error");
 		}
 
 		private function sigHttpStatusHandler(event:HTTPStatusEvent):void {
-		// trace("httpStatusHandler: " + event);
 		}
 
 		private function sigIoErrorHandler(event:IOErrorEvent):void {
-		// trace("ioErrorHandler: " + event);
-		// trace(s3onFailedCall);
-		_errorNotifier.send("Network error!");
-		// mx.controls.Alert.show(String(event),"networkError",0);
+			_errorNotifier.send("Signature Network Error");
 		}
 
     private function sigCompleteHandler(event:Event):void {
@@ -334,9 +332,9 @@ package com.nathancolgate.s3_swf_upload {
         _options.Secure         = xml.https;
 
         if (xml.errorMessage != "") {
-						_uploadButton.enabled = true;
-            _errorNotifier.send("Error! Please try again, or contact us for help.");
-            return;
+					_startButton.enabled = true;
+					_errorNotifier.send("Error! Please try again, or contact us for help.");
+					return;
         }
 
         var request:S3UploadRequest = new S3UploadRequest(_options);
@@ -347,11 +345,10 @@ package com.nathancolgate.s3_swf_upload {
         request.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, s3CompleteHandler);
 
         try {
-	        _statusNotifier.send("Upload started...");
-            request.upload(_file);
-        } catch(e:Error) {
-            _errorNotifier.send("Upload error!");
-            // trace("An error occurred: " + e);
+					_statusNotifier.send("Uploading "+_file.name+"...");
+					request.upload(_file);
+				} catch(e:Error) {
+					_errorNotifier.send("Upload error!");
         }
     }
 
@@ -359,36 +356,35 @@ package com.nathancolgate.s3_swf_upload {
 		
 		// called after the file is opened before upload    
 		private function s3OpenHandler(event:Event):void{
-			_statusNotifier.send("File (1 of "+_files.length+") is opened and about to be uploaded");
-			// What's up with this?
-			_files;
+			_statusNotifier.send("Opening "+_file.name+"... (This should only be called once per file)");
 		}
 
 		// called during the file upload of each file being uploaded
 		// we use this to feed the progress bar its data
 		private function s3ProgressHandler(event:ProgressEvent):void {
-			_progressNotifier.send(event, _files.length-1)
+			_progressNotifier.send(event.bytesLoaded, event.bytesTotal, _queueSentSize+event.bytesLoaded, _queueFileSize)
 		}
 
 		// only called if there is an  error detected by flash player browsing or uploading a file   
 		private function s3IoErrorHandler(event:IOErrorEvent):void{
-			_errorNotifier.send("Error! Please retry, or contact us for help: " + String(event));
+			_errorNotifier.send("S3 Network Error");
 		}    
 
 		// only called if a security error detected by flash player such as a sandbox violation
 		private function s3SecurityErrorHandler(event:SecurityErrorEvent):void{
-			_errorNotifier.send("Error, access denied: " + String(event));
+			_errorNotifier.send("S3 Security Error");
 		}
         
 		private function s3CompleteHandler(event:Event):void{
 			_successNotifier.send(_options);
+			_queueSentSize += parseInt(_options.FileSize);
 			_files.removeItemAt(0);
 			if (_files.length > 0){
-				_totalbytes = 0;
+				// _totalbytes = 0;
 				uploadFiles();
 			} else {
 				_browseButton.enabled = true;
-				_cancelButton.enabled = false;
+				_stopButton.enabled = false;
 				_completionNotifier.send();
 				_statusNotifier.send("All uploads complete");
 			}
@@ -409,15 +405,6 @@ package com.nathancolgate.s3_swf_upload {
 			return contentType;
 		}
 
-		/*
-		//Remove Selected File From Queue
-		private function removeSelectedFileFromQueue(event:Event):void{
-			if (_filesDataGrid.selectedIndex >= 0){
-				_files.removeItemAt( _filesDataGrid.selectedIndex);
-			}
-		}
-		*/
-
 		// Checks the files do not exceed maxFileSize | if _maxFileSize == 0 No File Limit Set
 		private function checkFileSize(filesize:Number):Boolean{
 			var r:Boolean = false;
@@ -427,46 +414,11 @@ package com.nathancolgate.s3_swf_upload {
 			} else if (filesize <= _maxFileSize){
 				r = true;
 			}
-
 			if (_maxFileSize == 0){
 				r = true;
 			}
-
 			return r;
 		}
-		
-		/* DESTROY DESTROY DESTROY */
-		/* DESTROY DESTROY DESTROY */
-		/* DESTROY DESTROY DESTROY */
-		/* DESTROY DESTROY DESTROY */
-		/* DESTROY DESTROY DESTROY */
-
-		/*
-		//label function for the datagird File Size Column
-		private function bytesColumnToString(data:Object,blank:Object):String {
-			return bytesToString(data.size);
-		}
-
-		//label function for the datagird File Size Column
-		private function bytesToString(bytes:Number):String {
-			var byteString:String;
-			var kiloBytes:Number;
-			kiloBytes = bytes / 1024;
-			if (kiloBytes > 1024) {
-				byteString = String(Math.round(kiloBytes / 1024)) + ' mb';
-			} else {
-				byteString = String(Math.round(kiloBytes)) + ' kb';
-			}
-			return byteString;
-		}
-		*/
-        
-		/*private function dateTimeColumnToString(data:Object, column:DataGridColumn):String {
-		var dateString:String;
-		dateString = _dateTimeFormatter.format(data.modificationDate);
-		return dateString;
-		}*/
-
 
 	}
 }

@@ -2,13 +2,13 @@ package com.nathancolgate.s3_swf_upload {
 
   import flash.external.ExternalInterface;
 	
-  public class CancelingManager {
+  public class ResetButton {
 
 		private var _enabled:Boolean;
-		private var _manageCall:String;
+		private var _enableCall:String;
 
-		public function CancelingManager(manageCall:String) {
-			_manageCall = manageCall;
+		public function ResetButton(enableCall:String) {
+			_enableCall = enableCall;
 			init();
 		}
         
@@ -24,8 +24,8 @@ package com.nathancolgate.s3_swf_upload {
 
 		public function set enabled( value:Boolean ):void {
 			_enabled = value;
-			ExternalInterface.call(_manageCall,value);
+			ExternalInterface.call(_enableCall,value);
 		}
-		
+
 	}
 }

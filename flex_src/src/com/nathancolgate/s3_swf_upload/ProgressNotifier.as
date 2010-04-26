@@ -1,7 +1,6 @@
 package com.nathancolgate.s3_swf_upload {
 
   import flash.external.ExternalInterface;
-	import flash.events.ProgressEvent;
 	
   public class ProgressNotifier {
 
@@ -11,9 +10,11 @@ package com.nathancolgate.s3_swf_upload {
 			_notifyCall = notifyCall;
 		}
         
-		public function send(event:ProgressEvent, filesRemaining:Number):void {
-			event.bytesLoaded, event.bytesTotal
-			ExternalInterface.call(_notifyCall,event.bytesLoaded, event.bytesTotal,filesRemaining);
+		public function send(currentSent:Number,
+													currentSize:Number,
+													overallSent:Number,
+													overallSize:Number):void {
+			ExternalInterface.call(_notifyCall,currentSent,currentSize,overallSent,overallSize);
 		}
 
 	}

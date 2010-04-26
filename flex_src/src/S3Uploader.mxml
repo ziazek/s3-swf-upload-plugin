@@ -4,18 +4,6 @@
                 backgroundColor="#FFFFFF"
                 creationComplete="registerCallbacks();"
                 layout="absolute">
-
-
-
-    <mx:Script source="S3Uploader.as"/>
-
-    <mx:VBox>
-
-
-
-
-        <mx:Button label="Browse..." id="browseButton"/>
-
-    </mx:VBox>
-
+	<mx:Script source="S3Uploader.as"/>
+	<mx:Button label="Browse..." id="browseButton"/>
 </mx:Application>

@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
-                backgroundAlpha="0"
-                backgroundColor="#FFFFFF"
-                creationComplete="registerCallbacks();"
-                layout="absolute">
-	<mx:Script source="S3Uploader.as"/>
-	<mx:Button label="Browse..." id="browseButton"/>
-</mx:Application>

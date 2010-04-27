@@ -40,7 +40,7 @@ package com.elctech {
         private var _options:S3UploadOptions;
         private var _httpStatusErrorReceived:Boolean;
         private var _uploadStarted:Boolean;
-        private var _fileReference:FileReference;
+        private var fileReference:FileReference;
         
         private const ENDPOINT:String = "s3.amazonaws.com";
         private const MIN_BUCKET_LENGTH:int = 3;
@@ -140,7 +140,7 @@ package com.elctech {
 
             // Save the FileReference object so that it doesn't get GCed.
             // If this happens, we can lose events that should be dispatched.
-            _fileReference = fileReference;
+            fileReference = fileReference;
 
             var postUrl:String = buildUrl();
             loadPolicyFile(postUrl);

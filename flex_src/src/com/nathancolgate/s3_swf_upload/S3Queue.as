@@ -9,22 +9,28 @@ package com.nathancolgate.s3_swf_upload {
   public class S3Queue extends ArrayCollection {
 	
 		// S3 Interaction Vars
-		private var _signature:S3Signature;
+		private var _signatureUrl:String;
+		private var _prefixPath:String;
 
-		public function S3Queue(source:Array = null) {
+		public function S3Queue(signatureUrl:String,
+														prefixPath:String,
+														source:Array = null) {
+															
+			_signatureUrl = signatureUrl;
+			_prefixPath	  = prefixPath;
 			super(source);
 
 			// Outgoing calls
 			this.addEventListener(CollectionEvent.COLLECTION_CHANGE, changeHandler);
 			// Incoming calls
-			ExternalInterface.addCallback("startQueue", startHandler);
+			ExternalInterface.addCallback("startUploading", startUploadingHandler);
 			ExternalInterface.addCallback("clearQueue", clearHandler);
-			ExternalInterface.addCallback("stopQueue", stopHandler);
+			ExternalInterface.addCallback("stopUploading", stopUploadingHandler);
 		}
 		
 		public function uploadNextFile():void{
-			Globals.file = FileReference(this.getItemAt(0));
-			_signature = new S3Signature;
+			var next_file:FileReference = FileReference(this.getItemAt(0));
+			var signature:S3Signature = new S3Signature(next_file,_signatureUrl,_prefixPath);
 		}
 		
 		// whenever the queue changes this function is called 
@@ -32,26 +38,32 @@ package com.nathancolgate.s3_swf_upload {
 			ExternalInterface.call('s3_swf.onQueueChange',this);
 		}
 		
-		// Start uploading the files from the queue
-		private function startHandler():void{
-			if (this.length > 0){
-				ExternalInterface.call('s3_swf.onQueueStart',this);
-				Globals.queue.uploadNextFile();
-			} else {
-				WarningMessage.send('You must select at least one file to upload');
-			}
-		}
-		
 		// Remove all files from the upload queue;
 		private function clearHandler():void{
 			this.removeAll();
 			ExternalInterface.call('s3_swf.onQueueClear',this);
 		}
+
+		// Start uploading the files from the queue
+		private function startUploadingHandler():void{
+			if (this.length > 0){
+				ExternalInterface.call('s3_swf.onUploadingStart');
+				uploadNextFile();
+			} else {
+				ExternalInterface.call('s3_swf.onQueueEmpty',this);
+			}
+		}
 		
 		// Cancel Current File Upload
-		private function stopHandler():void{
-			Globals.file.cancel();
-			ExternalInterface.call('s3_swf.onQueueStop',this);
+		// Which stops all future uploads as well
+		private function stopUploadingHandler():void{
+			if (this.length > 0){
+				var current_file:FileReference = FileReference(this.getItemAt(0));
+				current_file.cancel();
+				ExternalInterface.call('s3_swf.onUploadingStop');
+			} else {
+				ExternalInterface.call('s3_swf.onQueueEmpty',this);
+			}
 		}
 
 	}

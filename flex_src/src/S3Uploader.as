@@ -1,16 +1,10 @@
 package  {
-	//Events
-	import flash.events.*;
 
-	// Misc
+	import flash.events.*;
 	import flash.external.ExternalInterface;
-	import flash.net.FileFilter;
-	import flash.net.FileReference;
-	import flash.net.FileReferenceList;
+	import flash.net.*;
 	import flash.display.Sprite;
 	import flash.system.Security;
-
-	// S3 SWF Upload
 	import com.nathancolgate.s3_swf_upload.*;
 	
 	public class S3Uploader extends Sprite {
@@ -24,9 +18,11 @@ package  {
 		private var _fileFilter:FileFilter;
 		
 		//config vars
-		private var _maxFileSize:Number; //bytes
-		private var _maxFileCount:Number;
-		private var _multipleFiles:Boolean;
+		private var _fileSizeLimit:Number; //bytes
+		private var _queueSizeLimit:Number;
+		private var _selectMultipleFiles:Boolean;
+		
+		private var cssLoader:URLLoader;
 		
 		public function S3Uploader() {
 			super();
@@ -42,62 +38,56 @@ package  {
 
 		private function init(signatureUrl:String,  
 		                      prefixPath:String, 
-		                      maxFileSize:Number,
-													maxFileCount:Number,
+		                      fileSizeLimit:Number,
+													queueSizeLimit:Number,
 		                      fileTypes:String,
 		                      fileTypeDescs:String,
-													multipleFiles:Boolean):void {
-			
+													selectMultipleFiles:Boolean,
+													buttonWidth:Number,
+													buttonHeight:Number,
+													buttonUpUrl:String,
+													buttonDownUrl:String,
+													buttonOverUrl:String
+													):void {
 			
 			flash.system.Security.allowDomain("*");
+			
+			// UI
+			var browseButton:BrowseButton = new BrowseButton(buttonWidth,buttonHeight,buttonUpUrl,buttonDownUrl,buttonOverUrl);
+		  addChild(browseButton);
 
-			var browseButton:BrowseButton = new BrowseButton;
-      addChild(browseButton);
-										
-			// signature configs to be passed along to the S3 Signature objects
-			Globals.signatureUrl = signatureUrl;
-			Globals.prefixPath 	 = prefixPath;
+
+      stage.showDefaultContextMenu = false;
+      stage.scaleMode = flash.display.StageScaleMode.NO_SCALE;
+      stage.align = flash.display.StageAlign.TOP_LEFT;
+
+			this.addEventListener(MouseEvent.CLICK, clickHandler);
 
 			// file dialog boxes
 			// We do two, so that we have the option to pick one or many
-			_maxFileSize 					= maxFileSize;
-			_fileFilter 					= new FileFilter(fileTypeDescs, fileTypes);
-			_maxFileCount 				= maxFileCount;
-			_multipleFiles 				= multipleFiles;
-			_multipleFileDialogBox= new FileReferenceList;
-			_singleFileDialogBox 	= new FileReference;
+			_fileSizeLimit 					= fileSizeLimit;
+			_fileFilter 						= new FileFilter(fileTypeDescs, fileTypes);
+			_queueSizeLimit 				= queueSizeLimit;
+			_selectMultipleFiles		= selectMultipleFiles;
+			_multipleFileDialogBox	= new FileReferenceList;
+			_singleFileDialogBox 		= new FileReference;
 			_multipleFileDialogBox.addEventListener(Event.SELECT, selectFileHandler);
 			_singleFileDialogBox.addEventListener(Event.SELECT, selectFileHandler);
 
-			// The button!
-			// _browseButton 				= new Button;
-			addEventListener(MouseEvent.CLICK, clickHandler);
+			
 
 			// Setup Queue, File
-			this.queue 						= new S3Queue;
+			this.queue 						= new S3Queue(signatureUrl,prefixPath);
 			Globals.queue					= this.queue;
-			this.file 						= null;
-			Globals.file					= this.file;
-
-			ExternalInterface.addCallback("removeFile", removeFileHandler);
 			
-			/*
-				<mx:Application xmlns:mx="http://www.adobe.com/2006/mxml"
-				               backgroundAlpha="0"
-				               backgroundColor="#FFFFFF"
-				               creationComplete="registerCallbacks();"
-				               layout="absolute">
-					<mx:Script source="S3Uploader.as"/>
-					<mx:Button label="Browse..." id="browseButton"/>
-				</mx:Application>
-			*/
+			ExternalInterface.addCallback("removeFileFromQueue", removeFileHandler);
 			
 		}
 		
 		// called when the browse button is clicked
 		// Browse for files
 		private function clickHandler(event:Event):void{
-			if(_multipleFiles == true){
+			if(_selectMultipleFiles == true){
 				_multipleFileDialogBox.browse([_fileFilter]);
 			} else {
 				_singleFileDialogBox.browse([_fileFilter]);
@@ -106,10 +96,10 @@ package  {
 
 		//  called after user selected files form the browse dialouge box.
 		private function selectFileHandler(event:Event):void {
-			var remainingSpots:int = _maxFileCount - this.queue.length;
+			var remainingSpots:int = _queueSizeLimit - this.queue.length;
 			var tooMany:Boolean = false;
 			
-			if(_multipleFiles == true){
+			if(_selectMultipleFiles == true){
 				// Add multiple files to the queue array
 				if(event.currentTarget.fileList.length > remainingSpots) { tooMany = true; }
 				var i:int;
@@ -126,7 +116,7 @@ package  {
 			}
 			
 			if(tooMany == true) {
-				WarningMessage.send("You can only upload "+_maxFileCount+" files at a time");
+				ExternalInterface.call('s3_swf.onQueueSizeLimitReached',this.queue);
 			}
 
 		}
@@ -137,7 +127,7 @@ package  {
 				this.queue.addItem(file);
 				ExternalInterface.call('s3_swf.onFileAdd',file);
 			}  else {
-				WarningMessage.send(this.file.name + " too large, max is " + Math.round(_maxFileSize / 1024) + " kb");
+				ExternalInterface.call('s3_swf.onFileSizeLimitReached',file);
 			}
 		}
 		
@@ -149,7 +139,7 @@ package  {
 				this.queue.removeItemAt(index);
 				ExternalInterface.call('s3_swf.onFileRemove',del_file);
 			} catch(e:Error) {
-				WarningMessage.send('The specified file could not be found in the queue');
+				ExternalInterface.call('s3_swf.onFileNotInQueue');
 			}
 		}
 
@@ -160,12 +150,12 @@ package  {
 		private function checkFileSize(filesize:Number):Boolean{
 			var r:Boolean = false;
 			//if  filesize greater then maxFileSize
-			if (filesize > _maxFileSize){
+			if (filesize > _fileSizeLimit){
 				r = false;
-			} else if (filesize <= _maxFileSize){
+			} else if (filesize <= _fileSizeLimit){
 				r = true;
 			}
-			if (_maxFileSize == 0){
+			if (_fileSizeLimit == 0){
 				r = true;
 			}
 			return r;

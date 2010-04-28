@@ -4,68 +4,69 @@ package com.nathancolgate.s3_swf_upload {
 	import com.elctech.S3UploadRequest;
   import flash.external.ExternalInterface;
 	import com.nathancolgate.s3_swf_upload.*;
-	import flash.net.*
-	import flash.events.*
+	import flash.net.*;
+	import flash.events.*;
 	
   public class S3Upload extends S3UploadRequest {
 		
-		private var options:S3UploadOptions;
+		private var _upload_options:S3UploadOptions;
 	
-		public function S3Upload(options:S3UploadOptions) {
-			super(options);
+		public function S3Upload(s3_upload_options:S3UploadOptions) {
+			super(s3_upload_options);
 			
-			this.options = options;
+			_upload_options = s3_upload_options;
 			
-			this.addEventListener(Event.OPEN, openHandler);
-	    this.addEventListener(ProgressEvent.PROGRESS, progressHandler);
-	    this.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
-	    this.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
-			this.addEventListener(HTTPStatusEvent.HTTP_STATUS, httpStatusHandler);
-	    this.addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, completeHandler);
+			addEventListener(Event.OPEN, openHandler);
+	    addEventListener(ProgressEvent.PROGRESS, progressHandler);
+	    addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+	    addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+			addEventListener(HTTPStatusEvent.HTTP_STATUS, httpStatusHandler);
+	    addEventListener(DataEvent.UPLOAD_COMPLETE_DATA, completeHandler);
 	
 		  try {
-				this.upload(Globals.file);
-			} catch(e:Error) {
-				ErrorMessage.send("Upload General Error: "+e);
+				var next_file:FileReference = FileReference(Globals.queue.getItemAt(0));
+				this.upload(next_file);
+			} catch(error:Error) {
+				ExternalInterface.call('s3_swf.onUploadError',_upload_options,error);
 	    }
 		}
 		
-		// called after the file is opened before upload    
+		// called after the file is opened before _upload_options    
 		private function openHandler(event:Event):void{
 			// This should only happen once per file
 			// But sometimes, after stopping and restarting the queeue
 			// It gets called multiple times
 			// BUG BUG BUG!
-			ExternalInterface.call('s3_swf.onUploadOpen',event);
+			ExternalInterface.call('s3_swf.onUploadOpen',_upload_options,event);
 		}
 
-		// called during the file upload of each file being uploaded
+		// called during the file _upload_options of each file being _upload_optionsed
 		// we use this to feed the progress bar its data
-		private function progressHandler(event:ProgressEvent):void {
-			ExternalInterface.call('s3_swf.onUploadProgress',event);
+		private function progressHandler(progress_event:ProgressEvent):void {
+			ExternalInterface.call('s3_swf.onUploadProgress',_upload_options,progress_event);
 		}
 
-		// only called if there is an  error detected by flash player browsing or uploading a file   
-		private function ioErrorHandler(event:IOErrorEvent):void{
-			ErrorMessage.send("Upload IO Error: "+event);
+		// only called if there is an  error detected by flash player browsing or _upload_optionsing a file   
+		private function ioErrorHandler(io_error_event:IOErrorEvent):void{
+			ExternalInterface.call('s3_swf.onUploadIOError',_upload_options,io_error_event);
 		}    
 
-		private function httpStatusHandler(event:HTTPStatusEvent):void {
-			ExternalInterface.call('s3_swf.onUploadHttpStatus',event);
+		private function httpStatusHandler(http_status_event:HTTPStatusEvent):void {
+			ExternalInterface.call('s3_swf.onUploadHttpStatus',_upload_options,http_status_event);
 		}
 		
 		// only called if a security error detected by flash player such as a sandbox violation
-		private function securityErrorHandler(event:SecurityErrorEvent):void{
-			ErrorMessage.send("Upload Security Error: "+event);
+		private function securityErrorHandler(security_error_event:SecurityErrorEvent):void{
+			ExternalInterface.call('s3_swf.onUploadSecurityError',_upload_options,security_error_event);
 		}
         
 		private function completeHandler(event:Event):void{
-			ExternalInterface.call('s3_swf.onUploadComplete',this.options);
+			ExternalInterface.call('s3_swf.onUploadComplete',_upload_options,event);
 			Globals.queue.removeItemAt(0);
 			if (Globals.queue.length > 0){
 				Globals.queue.uploadNextFile();
 			} else {
-				ExternalInterface.call('s3_swf.onQueueFinish',Globals.queue);
+				ExternalInterface.call('s3_swf.onUploadingFinish');
 			}
 		}
 		

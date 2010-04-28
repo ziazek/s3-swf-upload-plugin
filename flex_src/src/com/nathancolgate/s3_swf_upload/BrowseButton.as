@@ -1,67 +1,55 @@
 package com.nathancolgate.s3_swf_upload {
 	
-	import flash.display.SimpleButton;
-	import flash.display.Shape;
+	import flash.display.*;
 	import flash.events.MouseEvent;
-	import flash.display.Sprite;
+	import flash.events.Event;
+	import flash.net.*;
 
 	public dynamic class BrowseButton extends Sprite {
 
 		private var _playButton:flash.display.SimpleButton;
 		
-		public function BrowseButton()
+		public function BrowseButton(width:Number,
+																	height:Number,
+																	buttonUpUrl:String,
+																	buttonDownUrl:String,
+																	buttonOverUrl:String)
 		{
 			super();
-			build();
-			draw();
-			return;
-		}
-		
-
-
-          public function draw():void
-         {
-
-            var play_rect:Shape = new flash.display.Shape();
-            play_rect.graphics.beginFill(0xFFCC00);
-            play_rect.graphics.lineStyle(1, 0x666666);
-            play_rect.graphics.drawRect(0, 0, 80, 80);
-            play_rect.graphics.endFill();
-
-						var play_circle:Shape = new Shape();
-            play_circle.graphics.beginFill(0xFFCC00);
-            play_circle.graphics.lineStyle(1, 0x666666);
-            play_circle.graphics.drawCircle(40, 40, 40);
-            play_circle.graphics.endFill();
-
-						var play_bigcircle:Shape = new Shape();
-            play_bigcircle.graphics.beginFill(0xFFCC00);
-            play_bigcircle.graphics.lineStyle(1, 0x666666);
-            play_bigcircle.graphics.drawCircle(80, 80, 80);
-            play_bigcircle.graphics.endFill();
-    
-						var loc8:*={
-							"playOver":play_circle, 
-							"playDown":play_bigcircle, 
-							"playUp":play_rect
-						};
-
-						
-             _playButton.upState = loc8.playUp;
-             _playButton.overState = loc8.playOver;
-             _playButton.downState = loc8.playDown;
-             _playButton.useHandCursor = true;
-             _playButton.hitTestState = loc8.playOver;
-
-             return;
-         }
-
-		private function build():void
-		{
+			
 			_playButton = new flash.display.SimpleButton();
+			_playButton.useHandCursor = true;
 			addChild(_playButton);
-			return;
+			
+			// Hit Test
+      var hit_test:Shape = new flash.display.Shape();            
+			hit_test.graphics.beginFill(0xFFCC00);
+      hit_test.graphics.drawRect(0, 0, width, height);            
+			hit_test.graphics.endFill();
+			_playButton.hitTestState = hit_test;
+			
+			// Up
+			var upLoader:Loader = new Loader();
+			upLoader.contentLoaderInfo.addEventListener(Event.COMPLETE,function(e:Event):void{ 
+				_playButton.upState = new Bitmap(e.target.content.bitmapData);
+			});
+			upLoader.load(new URLRequest(buttonUpUrl));
+
+			// Down
+			var downLoader:Loader = new Loader();
+			downLoader.contentLoaderInfo.addEventListener(Event.COMPLETE,function(e:Event):void{ 
+				_playButton.downState = new Bitmap(e.target.content.bitmapData);
+			});
+			downLoader.load(new URLRequest(buttonDownUrl));
+			
+			// Over
+			var overLoader:Loader = new Loader();
+			overLoader.contentLoaderInfo.addEventListener(Event.COMPLETE,function(e:Event):void{ 
+				_playButton.overState = new Bitmap(e.target.content.bitmapData);
+			});
+			overLoader.load(new URLRequest(buttonOverUrl));
 		}
+
 
 	}
 }

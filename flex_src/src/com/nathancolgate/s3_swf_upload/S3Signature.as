@@ -10,80 +10,80 @@ package com.nathancolgate.s3_swf_upload {
 	
   public class S3Signature {
 
-		private var _options:S3UploadOptions;
-		private var _upload:S3Upload;
-		private var _mimeMap:MimeTypeMap;
+		private var upload_options:S3UploadOptions;
+		private var _file:FileReference;
 
-		public function S3Signature() {		
-			_upload											= null;
-			_mimeMap 										= new MimeTypeMap;
+		public function S3Signature(file:FileReference,
+																	signatureUrl:String,
+																	prefixPath:String) {	
+			_file														= file;
 			
 			// Create options list for file s3 upload metadata 
-			_options										= new S3UploadOptions;
-			_options.FileSize          	= Globals.file.size.toString();
-			_options.FileName          	= getFileName(Globals.file);
-			_options.ContentType       	= getContentType(_options.FileName);
-			_options.key               	= Globals.prefixPath + _options.FileName;
+			upload_options									= new S3UploadOptions;
+			upload_options.FileSize         = _file.size.toString();
+			upload_options.FileName         = getFileName(_file);
+			upload_options.ContentType      = getContentType(upload_options.FileName);
+			upload_options.key              = prefixPath + upload_options.FileName;
 			
-			var variables:URLVariables 	= new URLVariables();
-			variables.key              	= _options.key
-			variables.content_type     	= _options.ContentType;
-		
-			var request:URLRequest     	= new URLRequest(Globals.signatureUrl);
-			request.method             	= URLRequestMethod.GET;
-			request.data               	= variables;
-			
-			var loader:URLLoader       	= new URLLoader();
-			loader.dataFormat          	= URLLoaderDataFormat.TEXT;
-			loader.addEventListener(Event.OPEN, openHandler);
-			loader.addEventListener(ProgressEvent.PROGRESS, progressHandler);
-			loader.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
-			loader.addEventListener(HTTPStatusEvent.HTTP_STATUS, httpStatusHandler);
-			loader.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
-			loader.addEventListener(Event.COMPLETE, completeHandler);
-			loader.load(request);
+			var variables:URLVariables 			= new URLVariables();
+			variables.key              			= upload_options.key
+			variables.content_type     			= upload_options.ContentType;
+		                              		
+			var request:URLRequest     			= new URLRequest(signatureUrl);
+			request.method             			= URLRequestMethod.GET;
+			request.data               			= variables;
+			                            		
+			var signature:URLLoader       	= new URLLoader();
+			signature.dataFormat          	= URLLoaderDataFormat.TEXT;
+			signature.addEventListener(Event.OPEN, openHandler);
+			signature.addEventListener(ProgressEvent.PROGRESS, progressHandler);
+			signature.addEventListener(SecurityErrorEvent.SECURITY_ERROR, securityErrorHandler);
+			signature.addEventListener(HTTPStatusEvent.HTTP_STATUS, httpStatusHandler);
+			signature.addEventListener(IOErrorEvent.IO_ERROR, ioErrorHandler);
+			signature.addEventListener(Event.COMPLETE, completeHandler);
+			signature.load(request);
   	}
 
 		private function openHandler(event:Event):void {
-			ExternalInterface.call('s3_swf.onSignatureOpen',event);
+			ExternalInterface.call('s3_swf.onSignatureOpen',_file,event);
 		}
 
-		private function progressHandler(event:ProgressEvent):void {
-			ExternalInterface.call('s3_swf.onSignatureProgress',event);
+		private function progressHandler(progress_event:ProgressEvent):void {
+			ExternalInterface.call('s3_swf.onSignatureProgress',_file,progress_event);
 		}
 
-		private function securityErrorHandler(event:SecurityErrorEvent):void {
-			ErrorMessage.send("Signature Security Error: "+event);
+		private function securityErrorHandler(security_error_event:SecurityErrorEvent):void {
+			ExternalInterface.call('s3_swf.onSignatureSecurityError',_file,security_error_event);
 		}
 
-		private function httpStatusHandler(event:HTTPStatusEvent):void {
-			ExternalInterface.call('s3_swf.onSignatureHttpStatus',event);
+		private function httpStatusHandler(http_status_event:HTTPStatusEvent):void {
+			ExternalInterface.call('s3_swf.onSignatureHttpStatus',_file,http_status_event);
 		}
 
-		private function ioErrorHandler(event:IOErrorEvent):void {
-			ErrorMessage.send("Signature IO Error: "+event);
+		private function ioErrorHandler(io_error_event:IOErrorEvent):void {
+			ExternalInterface.call('s3_swf.onSignatureIOError',_file,io_error_event);
 		}
 
   	private function completeHandler(event:Event):void {
-			ExternalInterface.call('s3_swf.onSignatureComplete',event);
+			ExternalInterface.call('s3_swf.onSignatureComplete',_file,event);
       var loader:URLLoader = URLLoader(event.target);
       var xml:XML  = new XML(loader.data);
       
       // create the s3 options object
-      _options.policy         = xml.policy;
-      _options.signature      = xml.signature;
-      _options.bucket         = xml.bucket;
-      _options.AWSAccessKeyId = xml.accesskeyid;
-      _options.acl            = xml.acl;
-      _options.Expires        = xml.expirationdate;
-      _options.Secure         = xml.https;
+      upload_options.policy         = xml.policy;
+      upload_options.signature      = xml.signature;
+      upload_options.bucket         = xml.bucket;
+      upload_options.AWSAccessKeyId = xml.accesskeyid;
+      upload_options.acl            = xml.acl;
+      upload_options.Expires        = xml.expirationdate;
+      upload_options.Secure         = xml.https;
 
       if (xml.errorMessage != "") {
-				ErrorMessage.send("Signature XML Error");
+				ExternalInterface.call('s3_swf.onSignatureXMLError',_file,xml.errorMessage);
 				return;
       }
 			
-      _upload = new S3Upload(_options);
+      var upload:S3Upload = new S3Upload(upload_options);
 		}
 		
 		/* MISC */
@@ -91,12 +91,15 @@ package com.nathancolgate.s3_swf_upload {
 		private function getContentType(fileName:String):String {
 			var fileNameArray:Array    = fileName.split(/\./);
 			var fileExtension:String   = fileNameArray[fileNameArray.length - 1];
-			var contentType:String     = _mimeMap.getMimeType(fileExtension);
+			var mimeMap:MimeTypeMap		 = new MimeTypeMap;
+			var contentType:String     = mimeMap.getMimeType(fileExtension);
 			return contentType;
 		}
+		
 		private function getFileName(file:FileReference):String {
 			var fileName:String = file.name.replace(/^.*(\\|\/)/gi, '').replace(/[^A-Za-z0-9\.\-]/gi, '_');
 			return fileName;
 		}
+		
 	}
 }

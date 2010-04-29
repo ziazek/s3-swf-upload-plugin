@@ -2,8 +2,6 @@ MIT-LICENSE
 Manifest
 README.textile
 Rakefile
-flex_src/bin-release/flex-config.xml
-flex_src/bin-release/s3_upload.swf
 flex_src/compile
 flex_src/src/Globals.as
 flex_src/src/S3Uploader.as

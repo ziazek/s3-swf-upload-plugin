@@ -2,15 +2,17 @@ h1. S3SwfUpload Gem For Rails 3
 
 S3SwfUpload allows user to upload a file to S3 directly, so you can save the cost of uploading process in your app server.
 
+The flex application in this fork was completely re-written so that there are no flash or flex UI components.  The one exception to that is the browse button, which, for security purposes MUST be flash. But even then, you get to pass the URLs for images to use for that button!
+
+The goal of this re-write is to put the power to customize this powerful took back in the hands of non-flex-savvy developers.  The look and feel is controlled by CSS, and any behavior is controlled by JavaScript.  Flex only handles the file management portion.  A nice result of this is that the flash file is only 46 kb, down from 288 kb.  If you see any way that this can be done better, please don't hesitate to let me know!
+
 h2. Installation
 
 This fork is designed to allow you to use this plugin as a gem in rails 3, so just follow the usage steps below.
 
 h2. Example
 
-GreenAsJade has a sample application running at http://demo-s3-swf-upload.heroku.com/
-
-This demonstrates the same basic functionality.  However this fork is based on PVR's fork, which has some additional UI changes.
+I'll try to get a example running on heroku ASAP.
 
 h2. Usage
 
@@ -51,53 +53,123 @@ You need to skip any authentication for this controller, the flash needs to be a
 <pre><code><%= s3_swf_upload_tag %>
 </code></pre>
 
-9. When you click upload, your file will be upload to http://bucket.s3.amazonasw.com/ by default.
+9. To achieve basic functionality, the only other thing you need is something to call the <code>startUploading</code> function.  For example:
 
-IE the default prefix is '' (no prefix)
-
-10. If you want to customise its behavior, here's a more complex example:
-
-<pre><code><%= raw s3_swf_upload_tag(
-	:width => 390,
-	:height => 150,
-	:file_types=>'*.jpg;*.gif;*.png;',
-	:file_type_descriptions =>"Image files.",
-	:success => "alert('SUCCESS! filename: ' + filename + ', filesize: ' + filesize + ', content_type: ' + contenttype);",
-	:failed => 'alert("FAILURE! status: " + status);',
-	:info => 'document.getElementById("upload-messages").innerHTML = status;',
-	:prefix => "public/attachment",
-	:initial_message=> 'Click "Browse..." to find files to upload.')
-%>
-<div id="upload-messages" name="upload-messages" class="notice"></div>
+<pre><code><input type="submit" value="Start Uploading" onclick="s3_swf_1_object.startUploading();" />
 </code></pre>
 
-In this case, files will be uploaded to http://bucket.s3.amazonasw.com/public/attachment/filename
+However, you will have no feedback or interface to let you know that anything is actually happening.
 
-11. If you need to check that the file they have selected is legitimate, before it gets uploaded, (for example, to make sure they aren't overwriting a file of the same name your database knows is already uploaded):
+10. If you want to customise its behavior, here's a more complex example: http://gist.github.com/382979
 
-i) Supply a method s3_swf_upload_error? in your application.rb to check, like this:
+h2. General Parameters
 
-<pre><code>def s3_swf_upload_file_error?(filename)
-	Mod.find_by_zip_name(File::basename(filename)) ?
-		"Sorry, there is already a mod with that zip file name!" :
-		nil
-end
+h3. :buttonWidth (integer = 100)
+
+h3. :buttonHeight (integer = 30)
+
+h3. :flashVersion (string = '9.0.0')
+
+h3. :queueSizeLimit (integer = 100)
+
+Maximum number of files that can be added to the queue.
+
+h3. :fileSizeLimit (integer = 524288000)
+
+Individual file size limit in bytes (default is 512 MB)
+
+h3. :fileTypes (string = '*.*')
+
+Something like this also works: <code>'*.jpg;*.gif;*.png;'</code>
+
+h3. :fileTypeDescs (string = 'All Files')
+
+Something like this also works: <code>'Image files.'</code>
+
+h3. :selectMultipleFiles (boolean = true)
+
+Set this to false if you only want to allow users to pick one file at a time.
+
+h3. :keyPrefix (string = '')
+
+String to be prepended to the uploaded file name to make the Amazon S3 key (location in bucket).
+
+h3. :signaturePath (string = '/s3_uploads.xml')
+
+Fully qualified path to the controller and action that will serve up the Amazon S3 signature
+
+h3. :buttonUpPath (string = '/flash/s3_up_button.gif')
+
+Fully qualified path to an image to be used as the Browse Button (in the up state).  Image should have same dimensions as the buttonWidth and buttonHeight parameters.
+
+h3. :buttonOverPath (string = '/flash/s3_over_button.gif')
+
+Fully qualified path to an image to be used as the Browse Button (in the over state).  Image should have same dimensions as the buttonWidth and buttonHeight parameters.
+
+h3. :buttonDownPath (string = '/flash/s3_down_button.gif')
+
+Fully qualified path to an image to be used as the Browse Button (in the down state).  Image should have same dimensions as the buttonWidth and buttonHeight parameters.
+
+h2. Callback Parameters
+
+The real power of this refactoring is that the flex application makes all of the following calls to JavaScript.  What you do with the calls is totally up to you:
+
+* :onFileAdd (file)
+* :onFileRemove function(file)
+* :onFileSizeLimitReached function(file)
+* :onFileNotInQueue function(file)
+* :onQueueChange function(queue)
+* :onQueueSizeLimitReached function(queue)
+* :onQueueEmpty function(queue)
+* :onQueueClear function(queue)
+* :onUploadingStart function()
+* :onUploadingStop function()
+* :onUploadingFinish function()
+* :onSignatureOpen function(file,event)
+* :onSignatureProgress function(file,progress_event)
+* :onSignatureSecurityError function(file,security_error_event)
+* :onSignatureComplete function(file,event)
+* :onSignatureIOError function(file,io_error_event)
+* :onSignatureHttpStatus function(file,http_status_event)
+* :onSignatureXMLError function(file,error_message)
+* :onUploadError function(upload_options,error)
+* :onUploadOpen function(upload_options,event)
+* :onUploadProgress function(upload_options,progress_event)
+* :onUploadIOError function(upload_options,io_error_event)
+* :onUploadHttpStatus function(upload_options,http_status_event)
+* :onUploadSecurityError function(upload_options,security_error_event)
+* :onUploadComplete function(upload_options,event)
+
+h2. JavaScript Functions
+
+The following functions can be called on the generated object.  Normally the call looks something like this:
+
+<pre><code>s3_swf_1_object.startUploading();
 </code></pre>
 
-Note that this method must return nil if there no error.
+h3. startUploading
 
-ii) Set the option
+Starts the uploading process
 
-<pre><code>:do_checks => '1'
-</code></pre>
+h3. stopUploading
 
-in the s3_swf_upload_tag
+Stops the uploading process.  Note: Stopping and restarting the uploading process is buggy.  I'd avoid it.
 
-h3. Kudos
+h3. clearQueue
+
+Clears all files out of the queue.
+
+h3. removeFileFromQueue(integer)
+
+Removes a specific file from the queue.
+
+h2. Kudos
 
 Original plugin is Copyright (c) 2008 elctech, released under the MIT license
 
 Updates to plugin for multiple file uploader are Copyright (c) 2010 PRX, released under the MIT license
 
-Conversion of plugin to gem for rails 3 is Copyright (c) 2010 Nathan Colgate, released under the MIT license
+Conversion of plugin to gem for rails 3 is Copyright (c) 2010 Nathan Colgate Clark, released under the MIT license
+
+Stripping the flex application of UI and adding callbacks Copyright (c) 2010 Nathan Colgate Clark, released under the MIT license
 

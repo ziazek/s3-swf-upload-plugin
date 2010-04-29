@@ -60,53 +60,55 @@ You need to skip any authentication for this controller, the flash needs to be a
 
 However, you will have no feedback or interface to let you know that anything is actually happening.
 
-10. If you want to customise its behavior, here's a more complex example: http://gist.github.com/382979
+10. If you want to customise its behavior, "here's a more complex example":http://gist.github.com/382979 
+
+And the "CSS":http://gist.github.com/383118 to go along. 
 
 h2. General Parameters
 
-h3. :buttonWidth (integer = 100)
+h3. :buttonWidth _(integer = 100)_
 
-h3. :buttonHeight (integer = 30)
+h3. :buttonHeight _(integer = 30)_
 
-h3. :flashVersion (string = '9.0.0')
+h3. :flashVersion _(string = '9.0.0')_
 
-h3. :queueSizeLimit (integer = 100)
+h3. :queueSizeLimit _(integer = 100)_
 
 Maximum number of files that can be added to the queue.
 
-h3. :fileSizeLimit (integer = 524288000)
+h3. :fileSizeLimit _(integer = 524288000)_
 
 Individual file size limit in bytes (default is 512 MB)
 
-h3. :fileTypes (string = '*.*')
+h3. :fileTypes _(string = '*.*')_
 
 Something like this also works: <code>'*.jpg;*.gif;*.png;'</code>
 
-h3. :fileTypeDescs (string = 'All Files')
+h3. :fileTypeDescs _(string = 'All Files')_
 
 Something like this also works: <code>'Image files.'</code>
 
-h3. :selectMultipleFiles (boolean = true)
+h3. :selectMultipleFiles _(boolean = true)_
 
 Set this to false if you only want to allow users to pick one file at a time.
 
-h3. :keyPrefix (string = '')
+h3. :keyPrefix _(string = '')_
 
 String to be prepended to the uploaded file name to make the Amazon S3 key (location in bucket).
 
-h3. :signaturePath (string = '/s3_uploads.xml')
+h3. :signaturePath _(string = '/s3_uploads.xml')_
 
 Fully qualified path to the controller and action that will serve up the Amazon S3 signature
 
-h3. :buttonUpPath (string = '/flash/s3_up_button.gif')
+h3. :buttonUpPath _(string = '/flash/s3_up_button.gif')_
 
 Fully qualified path to an image to be used as the Browse Button (in the up state).  Image should have same dimensions as the buttonWidth and buttonHeight parameters.
 
-h3. :buttonOverPath (string = '/flash/s3_over_button.gif')
+h3. :buttonOverPath _(string = '/flash/s3_over_button.gif')_
 
 Fully qualified path to an image to be used as the Browse Button (in the over state).  Image should have same dimensions as the buttonWidth and buttonHeight parameters.
 
-h3. :buttonDownPath (string = '/flash/s3_down_button.gif')
+h3. :buttonDownPath _(string = '/flash/s3_down_button.gif')_
 
 Fully qualified path to an image to be used as the Browse Button (in the down state).  Image should have same dimensions as the buttonWidth and buttonHeight parameters.
 
@@ -114,31 +116,31 @@ h2. Callback Parameters
 
 The real power of this refactoring is that the flex application makes all of the following calls to JavaScript.  What you do with the calls is totally up to you:
 
-* :onFileAdd (file)
-* :onFileRemove function(file)
-* :onFileSizeLimitReached function(file)
-* :onFileNotInQueue function(file)
-* :onQueueChange function(queue)
-* :onQueueSizeLimitReached function(queue)
-* :onQueueEmpty function(queue)
-* :onQueueClear function(queue)
-* :onUploadingStart function()
-* :onUploadingStop function()
-* :onUploadingFinish function()
-* :onSignatureOpen function(file,event)
-* :onSignatureProgress function(file,progress_event)
-* :onSignatureSecurityError function(file,security_error_event)
-* :onSignatureComplete function(file,event)
-* :onSignatureIOError function(file,io_error_event)
-* :onSignatureHttpStatus function(file,http_status_event)
-* :onSignatureXMLError function(file,error_message)
-* :onUploadError function(upload_options,error)
-* :onUploadOpen function(upload_options,event)
-* :onUploadProgress function(upload_options,progress_event)
-* :onUploadIOError function(upload_options,io_error_event)
-* :onUploadHttpStatus function(upload_options,http_status_event)
-* :onUploadSecurityError function(upload_options,security_error_event)
-* :onUploadComplete function(upload_options,event)
+* :onFileAdd _(file)_
+* :onFileRemove _(file)_
+* :onFileSizeLimitReached _(file)_
+* :onFileNotInQueue _(file)_
+* :onQueueChange _(queue)_
+* :onQueueSizeLimitReached _(queue)_
+* :onQueueEmpty _(queue)_
+* :onQueueClear _(queue)_
+* :onUploadingStart _()_
+* :onUploadingStop _()_
+* :onUploadingFinish _()_
+* :onSignatureOpen _(file,event)_
+* :onSignatureProgress _(file,progress_event)_
+* :onSignatureSecurityError _(file,security_error_event)_
+* :onSignatureComplete _(file,event)_
+* :onSignatureIOError _(file,io_error_event)_
+* :onSignatureHttpStatus _(file,http_status_event)_
+* :onSignatureXMLError _(file,error_message)_
+* :onUploadError _(upload_options,error)_
+* :onUploadOpen _(upload_options,event)_
+* :onUploadProgress _(upload_options,progress_event)_
+* :onUploadIOError _(upload_options,io_error_event)_
+* :onUploadHttpStatus _(upload_options,http_status_event)_
+* :onUploadSecurityError _(upload_options,security_error_event)_
+* :onUploadComplete _(upload_options,event)_
 
 h2. JavaScript Functions
 

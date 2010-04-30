@@ -44,13 +44,15 @@ gem 'aws-s3', :require => 'aws/s3'
 <pre><code>$ rake s3_swf_upload:make_crossdomain
 </code></pre>
 
-7. Edit <code>app/controller/s3_uploads_controller.rb</code>
+7. Note: you no longer need to edit <code>app/controller/s3_uploads_controller.rb</code>
 
-You need to skip any authentication for this controller, the flash needs to be able to access it.  There's a big comment showing you where to do this :) 
+In my tests in Rails 3, the application was able to correctly handle the requests from the flash object.
+
+This means that your authentication systems can still be used to protect the signature generation.
 
 8. Initialize the SWF object in your view using this handy helper:
 
-<pre><code><%= s3_swf_upload_tag %>
+<pre><code><%=raw s3_swf_upload_tag %>
 </code></pre>
 
 9. To achieve basic functionality, the only other thing you need is something to call the <code>startUploading</code> function.  For example:

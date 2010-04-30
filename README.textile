@@ -6,9 +6,9 @@ The flex application in this fork was completely re-written so that there are no
 
 The goal of this re-write is to put the power to customize this powerful took back in the hands of non-flex-savvy developers.  The look and feel is controlled by CSS, and any behavior is controlled by JavaScript.  Flex only handles the file management portion.  A nice result of this is that the flash file is only 46 kb, down from 288 kb.  If you see any way that this can be done better, please don't hesitate to let me know!
 
-h2. Installation
+h2. Preview
 
-This fork is designed to allow you to use this plugin as a gem in rails 3, so just follow the usage steps below.
+<object width="600" height="375"><param name="allowfullscreen" value="true" /><param name="allowscriptaccess" value="always" /><param name="movie" value="http://vimeo.com/moogaloop.swf?clip_id=11363680&amp;server=vimeo.com&amp;show_title=0&amp;show_byline=0&amp;show_portrait=0&amp;color=00adef&amp;fullscreen=1" /><embed src="http://vimeo.com/moogaloop.swf?clip_id=11363680&amp;server=vimeo.com&amp;show_title=0&amp;show_byline=0&amp;show_portrait=0&amp;color=00adef&amp;fullscreen=1" type="application/x-shockwave-flash" allowfullscreen="true" allowscriptaccess="always" width="600" height="375"></embed></object>
 
 h2. Example
 

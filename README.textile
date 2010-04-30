@@ -12,7 +12,7 @@ h2. Example
 
 Watch a video of an example app being built using the gem on "Vimeo":http://vimeo.com/11363680
 
-I'll try to get a example running on heroku ASAP.
+There is also a demo app running on heroku at "http://s3swfuploader.heroku.com/":http://s3swfuploader.heroku.com/
 
 h2. Usage
 

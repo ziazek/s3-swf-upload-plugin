@@ -167,6 +167,16 @@ h3. removeFileFromQueue(integer)
 
 Removes a specific file from the queue.
 
+h2. Known Issues
+
+1. As much as I would like the interface to be 100% HTML, a (legitimate) security feature in Flash does not allow it:
+
+bq. "With Adobe Flash Player 10, the <code>FileReference.browse</code> and <code>FileReference.download</code>  operations may be initiated only through ActionScript that originates from user interaction." - "Adobe TechNote":http://kb2.adobe.com/cps/405/kb405546.html
+
+The next best thing I could come up with was to pass images in as buttons.
+
+2. If the <code>startUploading</code> call is made after calling <code>stopUploading</code>, only the first file in the queue is successfully uploaded.
+
 h2. Kudos
 
 Original plugin is Copyright (c) 2008 elctech, released under the MIT license

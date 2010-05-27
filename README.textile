@@ -169,10 +169,12 @@ Removes a specific file from the queue.
 
 h2. Will it work with < Rails 3?
 
-You bet.  The Rails 3 specific gem only makes installation and setup easier.  Download the gem and perform all the Usage steps by hand.  Namely: 
+You bet.  The Rails 3 specific gem only makes installation and setup easier.  Download the gem to your desktop (or similar non-gem path location) and perform all the Usage steps by hand.  Namely: 
 
  * copy the "template files":http://github.com/nathancolgate/s3-swf-upload-plugin/tree/master/lib/s3_swf_upload/railties/generators/uploader/templates/ into your application (use the "generator":http://github.com/nathancolgate/s3-swf-upload-plugin/blob/master/lib/s3_swf_upload/railties/generators/uploader/uploader_generator.rb as a road map)
 * copy the "view helpers":http://github.com/nathancolgate/s3-swf-upload-plugin/blob/master/lib/s3_swf_upload/view_helpers.rb into your applications <code>/lib</code> directory.
+
+You'll want to add the view helper to an initialization file: <code>require 'view_helpers'</code>
 
 h2. Known Issues
 

@@ -20,7 +20,7 @@ module S3SwfUpload
         unless @@access_key_id && @@secret_access_key && @@bucket
           raise "Please configure your S3 settings in #{filename} before continuing so that S3 SWF Upload can function properly."
         end
-      rescue Errno::ENOENT
+      rescue
          # No config file yet. Not a big deal. Just issue a warning
          puts "WARNING: You are using the S3 SWF Uploader gem, which wants a config file at #{filename}, " +
             "but none could be found. You should try running 'rails generate s3_swf_upload:uploader'"

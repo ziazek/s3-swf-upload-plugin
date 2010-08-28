@@ -1,7 +1,7 @@
 package  {
 
 	import flash.events.*;
-	import flash.external.ExternalInterface;
+	import flash.external.*;
 	import flash.net.*;
 	import flash.display.Sprite;
 	import flash.system.Security;
@@ -49,6 +49,7 @@ package  {
 													buttonDownUrl:String,
 													buttonOverUrl:String
 													):void {
+			// ExternalInterface.call('s3_swf.jsLog','Initializing...');
 			
 			flash.system.Security.allowDomain("*");
 			
@@ -81,53 +82,75 @@ package  {
 			Globals.queue					= this.queue;
 			
 			ExternalInterface.addCallback("removeFileFromQueue", removeFileHandler);
+			// ExternalInterface.call('s3_swf.jsLog','Initialized');
 			
 		}
 		
 		// called when the browse button is clicked
 		// Browse for files
 		private function clickHandler(event:Event):void{
+			// ExternalInterface.call('s3_swf.jsLog','clickHandler');
 			if(_selectMultipleFiles == true){
+				// ExternalInterface.call('s3_swf.jsLog','Opening Multiple File Dialog box...');
 				_multipleFileDialogBox.browse([_fileFilter]);
+				// ExternalInterface.call('s3_swf.jsLog','Multiple File Dialog box Opened');
 			} else {
+				// ExternalInterface.call('s3_swf.jsLog','Opening Single File Dialog box...');
 				_singleFileDialogBox.browse([_fileFilter]);
+				// ExternalInterface.call('s3_swf.jsLog','Single File Dialog box Opened');
 			}
 		}
 
 		//  called after user selected files form the browse dialouge box.
 		private function selectFileHandler(event:Event):void {
+			// ExternalInterface.call('s3_swf.jsLog','selectFileHandler');
 			var remainingSpots:int = _queueSizeLimit - this.queue.length;
 			var tooMany:Boolean = false;
 			
 			if(_selectMultipleFiles == true){
-				// Add multiple files to the queue array
+				// Adding multiple files to the queue array
+				// ExternalInterface.call('s3_swf.jsLog','Adding multiple files to the queue array...');
 				if(event.currentTarget.fileList.length > remainingSpots) { tooMany = true; }
 				var i:int;
 				for (i=0;i < remainingSpots; i ++){
-			    addFile(event.currentTarget.fileList[i]);
+					// ExternalInterface.call('s3_swf.jsLog','Adding '+(i+1)+' of '+(remainingSpots)+' files to the queue array...');
+					addFile(event.currentTarget.fileList[i]);
+					// ExternalInterface.call('s3_swf.jsLog',(i+1)+' of '+(remainingSpots)+' files added to the queue array');
 				}
+				// ExternalInterface.call('s3_swf.jsLog','Multiple files added to the queue array');
 			} else {
-				// Add one single files to the queue array
+				// Adding one single file to the queue array
+				// ExternalInterface.call('s3_swf.jsLog','Adding single file to the queue array...');
 				if(remainingSpots > 0) {
 					addFile(FileReference(event.target));
 				} else {
 					tooMany = true;
 				}
+				// ExternalInterface.call('s3_swf.jsLog','Single file added to the queue array');
 			}
 			
 			if(tooMany == true) {
-				ExternalInterface.call('s3_swf.onQueueSizeLimitReached',this.queue);
+				// ExternalInterface.call('s3_swf.jsLog','Calling onQueueSizeLimitReached...');
+				ExternalInterface.call('s3_swf.onQueueSizeLimitReached',this.queue.toJavascript());
+				// ExternalInterface.call('s3_swf.jsLog','onQueueSizeLimitReached called');
 			}
 
 		}
 		
 		// Add Selected File to Queue from file browser dialog box
 		private function addFile(file:FileReference):void{
+			// ExternalInterface.call('s3_swf.jsLog','addFile');
 			if (checkFileSize(file.size)){
+				// ExternalInterface.call('s3_swf.jsLog','Adding file to queue...');
 				this.queue.addItem(file);
-				ExternalInterface.call('s3_swf.onFileAdd',file);
+				// ExternalInterface.call('s3_swf.jsLog','File added to queue');
+				// ExternalInterface.call('s3_swf.jsLog','Calling onFileAdd...');
+				ExternalInterface.call('s3_swf.onFileAdd',toJavascript(file));
+				// ExternalInterface.call('s3_swf.jsLog','onFileAdd called');
 			}  else {
-				ExternalInterface.call('s3_swf.onFileSizeLimitReached',file);
+				// ExternalInterface.call('s3_swf.jsLog','Calling onFileSizeLimitReached...');
+				ExternalInterface.call('s3_swf.onFileSizeLimitReached',toJavascript(file));
+				// ExternalInterface.call('s3_swf.jsLog','onFileSizeLimitReached called');
 			}
 		}
 		
@@ -137,9 +160,13 @@ package  {
 			try {
 				var del_file:FileReference = FileReference(this.queue.getItemAt(index));
 				this.queue.removeItemAt(index);
+				// ExternalInterface.call('s3_swf.jsLog','Calling onFileRemove...');
 				ExternalInterface.call('s3_swf.onFileRemove',del_file);
-			} catch(e:Error) {
+				// ExternalInterface.call('s3_swf.jsLog','onFileRemove called');
+			} catch(e:Error) {	
+				// ExternalInterface.call('s3_swf.jsLog','Calling onFileNotInQueue...');
 				ExternalInterface.call('s3_swf.onFileNotInQueue');
+				// ExternalInterface.call('s3_swf.jsLog','onFileNotInQueue called');
 			}
 		}
 
@@ -160,5 +187,15 @@ package  {
 			}
 			return r;
 		}
+		
+		// Turns a FileReference into an Object so that ExternalInterface doesn't choke
+		private function toJavascript(file:FileReference):Object{
+			var javascriptable_file:Object = new Object();
+			javascriptable_file.name = file.name;
+			javascriptable_file.size = file.size;
+			javascriptable_file.type = file.type;
+			return javascriptable_file;
+		}
+		
 	}
 }

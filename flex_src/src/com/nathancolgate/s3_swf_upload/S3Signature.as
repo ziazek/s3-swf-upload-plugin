@@ -45,27 +45,27 @@ package com.nathancolgate.s3_swf_upload {
   	}
 
 		private function openHandler(event:Event):void {
-			ExternalInterface.call('s3_swf.onSignatureOpen',_file,event);
+			ExternalInterface.call('s3_swf.onSignatureOpen',toJavascript(_file),event);
 		}
 
 		private function progressHandler(progress_event:ProgressEvent):void {
-			ExternalInterface.call('s3_swf.onSignatureProgress',_file,progress_event);
+			ExternalInterface.call('s3_swf.onSignatureProgress',toJavascript(_file),progress_event);
 		}
 
 		private function securityErrorHandler(security_error_event:SecurityErrorEvent):void {
-			ExternalInterface.call('s3_swf.onSignatureSecurityError',_file,security_error_event);
+			ExternalInterface.call('s3_swf.onSignatureSecurityError',toJavascript(_file),security_error_event);
 		}
 
 		private function httpStatusHandler(http_status_event:HTTPStatusEvent):void {
-			ExternalInterface.call('s3_swf.onSignatureHttpStatus',_file,http_status_event);
+			ExternalInterface.call('s3_swf.onSignatureHttpStatus',toJavascript(_file),http_status_event);
 		}
 
 		private function ioErrorHandler(io_error_event:IOErrorEvent):void {
-			ExternalInterface.call('s3_swf.onSignatureIOError',_file,io_error_event);
+			ExternalInterface.call('s3_swf.onSignatureIOError',toJavascript(_file),io_error_event);
 		}
 
   	private function completeHandler(event:Event):void {
-			ExternalInterface.call('s3_swf.onSignatureComplete',_file,event);
+			ExternalInterface.call('s3_swf.onSignatureComplete',toJavascript(_file),event);
       var loader:URLLoader = URLLoader(event.target);
       var xml:XML  = new XML(loader.data);
       
@@ -79,7 +79,7 @@ package com.nathancolgate.s3_swf_upload {
       upload_options.Secure         = xml.https;
 
       if (xml.errorMessage != "") {
-				ExternalInterface.call('s3_swf.onSignatureXMLError',_file,xml.errorMessage);
+				ExternalInterface.call('s3_swf.onSignatureXMLError',toJavascript(_file),xml.errorMessage);
 				return;
       }
 			
@@ -99,6 +99,15 @@ package com.nathancolgate.s3_swf_upload {
 		private function getFileName(file:FileReference):String {
 			var fileName:String = file.name.replace(/^.*(\\|\/)/gi, '').replace(/[^A-Za-z0-9\.\-]/gi, '_');
 			return fileName;
+		}
+		
+		// Turns a FileReference into an Object so that ExternalInterface doesn't choke
+		private function toJavascript(file:FileReference):Object{
+			var javascriptable_file:Object = new Object();
+			javascriptable_file.name = file.name;
+			javascriptable_file.size = file.size;
+			javascriptable_file.type = file.type;
+			return javascriptable_file;
 		}
 		
 	}

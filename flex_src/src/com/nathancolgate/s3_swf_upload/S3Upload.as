@@ -37,36 +37,60 @@ package com.nathancolgate.s3_swf_upload {
 			// But sometimes, after stopping and restarting the queeue
 			// It gets called multiple times
 			// BUG BUG BUG!
+			// ExternalInterface.call('s3_swf.jsLog','openHandler');
+			// ExternalInterface.call('s3_swf.jsLog','Calling onUploadOpen...');
 			ExternalInterface.call('s3_swf.onUploadOpen',_upload_options,event);
+			// ExternalInterface.call('s3_swf.jsLog','onUploadOpen called');
 		}
 
 		// called during the file _upload_options of each file being _upload_optionsed
 		// we use this to feed the progress bar its data
 		private function progressHandler(progress_event:ProgressEvent):void {
+			// ExternalInterface.call('s3_swf.jsLog','progressHandler');
+			// ExternalInterface.call('s3_swf.jsLog','Calling onUploadProgress...');
 			ExternalInterface.call('s3_swf.onUploadProgress',_upload_options,progress_event);
+			// ExternalInterface.call('s3_swf.jsLog','onUploadProgress called');
 		}
 
 		// only called if there is an  error detected by flash player browsing or _upload_optionsing a file   
 		private function ioErrorHandler(io_error_event:IOErrorEvent):void{
+			// ExternalInterface.call('s3_swf.jsLog','ioErrorHandler');
+			// ExternalInterface.call('s3_swf.jsLog','Calling onUploadIOError...');
 			ExternalInterface.call('s3_swf.onUploadIOError',_upload_options,io_error_event);
+			// ExternalInterface.call('s3_swf.jsLog','onUploadIOError called');
 		}    
 
 		private function httpStatusHandler(http_status_event:HTTPStatusEvent):void {
+			// ExternalInterface.call('s3_swf.jsLog','httpStatusHandler');
+			// ExternalInterface.call('s3_swf.jsLog','Calling onUploadHttpStatus...');
 			ExternalInterface.call('s3_swf.onUploadHttpStatus',_upload_options,http_status_event);
+			// ExternalInterface.call('s3_swf.jsLog','onUploadHttpStatus called');
 		}
 		
 		// only called if a security error detected by flash player such as a sandbox violation
 		private function securityErrorHandler(security_error_event:SecurityErrorEvent):void{
+			// ExternalInterface.call('s3_swf.jsLog','securityErrorHandler');
+			// ExternalInterface.call('s3_swf.jsLog','Calling onUploadSecurityError...');
 			ExternalInterface.call('s3_swf.onUploadSecurityError',_upload_options,security_error_event);
+			// ExternalInterface.call('s3_swf.jsLog','onUploadSecurityError called');
 		}
         
 		private function completeHandler(event:Event):void{
+			// ExternalInterface.call('s3_swf.jsLog','completeHandler');
+			// ExternalInterface.call('s3_swf.jsLog','Calling onUploadComplete...');
 			ExternalInterface.call('s3_swf.onUploadComplete',_upload_options,event);
+			// ExternalInterface.call('s3_swf.jsLog','onUploadComplete called');
+			// ExternalInterface.call('s3_swf.jsLog','Removing item from global queue...');
 			Globals.queue.removeItemAt(0);
+			// ExternalInterface.call('s3_swf.jsLog','Item removed from global queue');
 			if (Globals.queue.length > 0){
+				// ExternalInterface.call('s3_swf.jsLog','Uploading next item in global queue...');
 				Globals.queue.uploadNextFile();
+				// ExternalInterface.call('s3_swf.jsLog','Next ttem in global queue uploaded');
 			} else {
+				// ExternalInterface.call('s3_swf.jsLog','Calling onUploadingFinish...');
 				ExternalInterface.call('s3_swf.onUploadingFinish');
+				// ExternalInterface.call('s3_swf.jsLog','onUploadingFinish called');
 			}
 		}
 		

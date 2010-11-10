@@ -12,6 +12,8 @@ package com.nathancolgate.s3_swf_upload {
 		private var _signatureUrl:String;
 		private var _prefixPath:String;
 
+		public var currentSignature:S3Signature;		
+
 		public function S3Queue(signatureUrl:String,
 														prefixPath:String,
 														source:Array = null) {
@@ -32,7 +34,7 @@ package com.nathancolgate.s3_swf_upload {
 			// ExternalInterface.call('s3_swf.jsLog','uploadNextFile');
 			// ExternalInterface.call('s3_swf.jsLog','Start uploadNextFile...');
 			var next_file:FileReference = FileReference(this.getItemAt(0));
-			var signature:S3Signature = new S3Signature(next_file,_signatureUrl,_prefixPath);
+			currentSignature = new S3Signature(next_file,_signatureUrl,_prefixPath);
 			// ExternalInterface.call('s3_swf.jsLog','End uploadNextFile');
 		}
 		
@@ -80,6 +82,9 @@ package com.nathancolgate.s3_swf_upload {
 				var current_file:FileReference = FileReference(this.getItemAt(0));
 				// ExternalInterface.call('s3_swf.jsLog','Cancelling current file...');
 				current_file.cancel();
+
+				currentSignature.s3upload.removeListeners();
+
 				// ExternalInterface.call('s3_swf.jsLog','Current file cancelled');
 				// ExternalInterface.call('s3_swf.jsLog','Calling onUploadingStop...');
 				ExternalInterface.call('s3_swf.onUploadingStop');

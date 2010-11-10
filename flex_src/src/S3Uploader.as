@@ -140,6 +140,7 @@ package  {
 		// Add Selected File to Queue from file browser dialog box
 		private function addFile(file:FileReference):void{
 			// ExternalInterface.call('s3_swf.jsLog','addFile');
+			if(!file) return;
 			if (checkFileSize(file.size)){
 				// ExternalInterface.call('s3_swf.jsLog','Adding file to queue...');
 				this.queue.addItem(file);

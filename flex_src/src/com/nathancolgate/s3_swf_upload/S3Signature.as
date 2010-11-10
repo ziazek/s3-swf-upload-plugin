@@ -13,6 +13,8 @@ package com.nathancolgate.s3_swf_upload {
 		private var upload_options:S3UploadOptions;
 		private var _file:FileReference;
 
+		public var s3upload:S3Upload;
+
 		public function S3Signature(file:FileReference,
 																	signatureUrl:String,
 																	prefixPath:String) {	
@@ -83,7 +85,7 @@ package com.nathancolgate.s3_swf_upload {
 				return;
       }
 			
-      var upload:S3Upload = new S3Upload(upload_options);
+      s3upload = new S3Upload(upload_options);
 		}
 		
 		/* MISC */

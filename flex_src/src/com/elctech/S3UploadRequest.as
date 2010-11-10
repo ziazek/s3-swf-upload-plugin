@@ -61,7 +61,7 @@ package com.elctech {
             _key         = options.key;
             _options     = options;
 		}
-		
+
 		private function buildUrl():String {
 
             var canUseVanityStyle:Boolean = canUseVanityStyle(_bucket);
@@ -127,11 +127,21 @@ package com.elctech {
             Security.loadPolicyFile(postUrl + "/crossdomain.xml");
         }
 		
+				
+				public function removeListeners():void {
+						trace('removeListeners');
+            fileReference.removeEventListener(Event.OPEN, onOpen);
+            fileReference.removeEventListener(ProgressEvent.PROGRESS, onProgress);
+            fileReference.removeEventListener(IOErrorEvent.IO_ERROR, onIOError);
+            fileReference.removeEventListener(SecurityErrorEvent.SECURITY_ERROR, onSecurityError);
+            fileReference.removeEventListener(DataEvent.UPLOAD_COMPLETE_DATA, onUploadCompleteData);
+            fileReference.removeEventListener(HTTPStatusEvent.HTTP_STATUS, onHttpStatus);
+				}
 		/**
          * Initiates a POST upload request to S3
          * @param    fileReference A FileReference object referencing the file to upload to S3.
          */
-        public function upload(fileReference:FileReference):void {
+        public function upload(_fileReference:FileReference):void {
             
             if(_uploadStarted) {
                 throw new Error("S3PostRequest object cannot be reused.  Create another S3PostRequest object to send another request to Amazon S3.");
@@ -140,7 +150,7 @@ package com.elctech {
 
             // Save the FileReference object so that it doesn't get GCed.
             // If this happens, we can lose events that should be dispatched.
-            fileReference = fileReference;
+            fileReference = _fileReference;
 
             var postUrl:String = buildUrl();
             loadPolicyFile(postUrl);
@@ -189,6 +199,7 @@ package com.elctech {
         }
         
         private function onOpen(event:Event):void {
+						trace('onOpen: '+this._key);
             this.dispatchEvent(event);
         }
         private function onIOError(event:IOErrorEvent):void {

@@ -184,7 +184,7 @@ bq. "With Adobe Flash Player 10, the <code>FileReference.browse</code> and <code
 
 The next best thing I could come up with was to pass images in as buttons.
 
-2. If the <code>startUploading</code> call is made after calling <code>stopUploading</code>, only the first file in the queue is successfully uploaded.
+-If the <code>startUploading</code> call is made after calling <code>stopUploading</code>, only the first file in the queue is successfully uploaded.-
 
 h2. Kudos
 
@@ -195,4 +195,6 @@ Updates to plugin for multiple file uploader are Copyright (c) 2010 PRX, release
 Conversion of plugin to gem for rails 3 is Copyright (c) 2010 Nathan Colgate Clark, released under the MIT license
 
 Stripping the flex application of UI and adding callbacks Copyright (c) 2010 Nathan Colgate Clark, released under the MIT license
+
+Thanks to yickster (Nick Merwin) for fixing the stopUploading issue
 

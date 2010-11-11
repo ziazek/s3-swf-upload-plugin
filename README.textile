@@ -64,7 +64,15 @@ However, you will have no feedback or interface to let you know that anything is
 
 10. If you want to customise its behavior, "here's a more complex example":http://gist.github.com/382979 
 
-And the "CSS":http://gist.github.com/383118 to go along. 
+And the "CSS":http://gist.github.com/383118 to go along.
+
+h2. File Renaming
+
+In my applications I upload all files to _tmp_ folder and then have rails manipulate the file (renaming, resizing, etc). Here's a starting point to give you an idea of what that looks like using Paperclip: 
+
+"How to integrate with Paperclip":http://gist.github.com/575842
+
+I prefer this solution because it allows the application to keep tabs on the files. However, if you are looking for a pure javascript solution, check out some of the forks of this project.
 
 h2. General Parameters
 

@@ -28,7 +28,6 @@ lib/s3_swf_upload/railties/generators/uploader/templates/s3_upload.swf
 lib/s3_swf_upload/railties/generators/uploader/templates/s3_uploads_controller.rb
 lib/s3_swf_upload/railties/generators/uploader/uploader_generator.rb
 lib/s3_swf_upload/railties/tasks/crossdomain.xml
-lib/s3_swf_upload/railties/tasks/s3_swf_upload.rake
 lib/s3_swf_upload/s3_config.rb
 lib/s3_swf_upload/signature.rb
 lib/s3_swf_upload/view_helpers.rb

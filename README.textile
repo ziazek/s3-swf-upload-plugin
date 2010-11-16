@@ -34,15 +34,15 @@ gem 'aws-s3', :require => 'aws/s3'
 	
 4. Configure your amazon parameters via the generated <code>config/amazon_s3.yml</code> file.
 
-5. Generate the bucket (if you haven't already)
+5. Make the bucket
 
-<pre><code>$ rake s3_swf_upload:make_bucket
-</code></pre>
+There used to be a rake task for this, but it was removed so that there would be no dependency of aws/s3.
 	
-6. Upload the crossdomain.xml file (if you haven't already)
+6. Upload the "crossdomain.xml file":https://github.com/nathancolgate/s3-swf-upload-plugin/blob/master/lib/s3_swf_upload/railties/tasks/crossdomain.xml
 
-<pre><code>$ rake s3_swf_upload:make_crossdomain
-</code></pre>
+There used to be a rake task for this, but it was removed so that there would be no dependency of aws/s3.
+
+Make sure the file is in the root and is publicly readable.
 
 7. Note: you no longer need to edit <code>app/controller/s3_uploads_controller.rb</code>
 

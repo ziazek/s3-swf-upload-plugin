@@ -27,9 +27,13 @@ module S3SwfUpload
           raise "Please configure your S3 settings in #{filename} before continuing so that S3 SWF Upload can function properly."
         end
       rescue Errno::ENOENT
+         # Using put inside a rake task may mess with some rake tasks
+         # According to: https://github.com/mhodgson/s3-swf-upload-plugin/commit/f5cc849e1d8b43c1f0d30eb92b772c10c9e73891
+         # Going to comment this out for the time being
+         # NCC@BNB - 11/16/10
          # No config file yet. Not a big deal. Just issue a warning
-         puts "WARNING: You are using the S3 SWF Uploader gem, which wants a config file at #{filename}, " +
-            "but none could be found. You should try running 'rails generate s3_swf_upload:uploader'"
+         # puts "WARNING: You are using the S3 SWF Uploader gem, which wants a config file at #{filename}, " +
+         #    "but none could be found. You should try running 'rails generate s3_swf_upload:uploader'"
       end
     end
   end
